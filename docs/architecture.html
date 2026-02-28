@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super 8s — Architecture Reference</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #d97706;
+      --accent-soft: #92400e33;
+      --blue: #58a6ff;
+      --green: #3fb950;
+      --purple: #bc8cff;
+      --red: #f85149;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 48px 24px 96px;
+    }
+    .page { max-width: 1100px; margin: 0 auto; }
+
+    /* Header */
+    .doc-header { margin-bottom: 48px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+    .doc-header h1 { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .doc-header p { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+
+    /* Sections */
+    h2 {
+      font-size: 1.35rem; font-weight: 600; margin-top: 56px; margin-bottom: 16px;
+      color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px;
+    }
+    h3 { font-size: 1.05rem; font-weight: 600; margin-top: 28px; margin-bottom: 10px; color: var(--blue); }
+    p { margin-bottom: 12px; }
+
+    /* Code / pre */
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85em;
+      color: #f0883e;
+    }
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 16px 0;
+      font-size: 0.85em;
+      line-height: 1.6;
+    }
+    pre code { background: none; border: none; padding: 0; color: var(--text); font-size: inherit; }
+
+    /* Mermaid wrapper */
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      margin: 20px 0 32px;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.9em; }
+    th {
+      background: var(--surface); color: var(--accent);
+      text-align: left; padding: 10px 14px;
+      border: 1px solid var(--border); font-weight: 600;
+    }
+    td { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; }
+    tr:nth-child(even) td { background: #ffffff05; }
+
+    /* Badges */
+    .badge {
+      display: inline-block; border-radius: 4px; padding: 2px 8px;
+      font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-fe  { background: #1c3a5e; color: var(--blue); }
+    .badge-be  { background: #1c3a28; color: var(--green); }
+    .badge-db  { background: #2e1b3c; color: var(--purple); }
+    .badge-shared { background: var(--accent-soft); color: var(--accent); }
+
+    /* Callouts */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 12px 16px;
+      border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+      font-size: 0.9em;
+    }
+    .callout strong { color: var(--accent); }
+
+    /* TOC */
+    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 40px; }
+    .toc h3 { margin-top: 0; margin-bottom: 12px; font-size: 0.9rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin: 4px 0; }
+    .toc a { color: var(--blue); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* Scoring formula box */
+    .formula-box {
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 8px; padding: 16px 20px; margin: 16px 0;
+      font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.9em;
+    }
+    .formula-box div { margin: 4px 0; }
+    .formula-box .label { color: var(--muted); display: inline-block; width: 220px; }
+    .formula-box .eq { color: var(--accent); font-weight: 700; }
+
+    /* UL / OL */
+    ul, ol { padding-left: 22px; margin-bottom: 12px; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-header">
+    <h1>Super 8s — Architecture Reference</h1>
+    <p>Systems overview: frontend / backend separation · database schema · API layer · business logic · demo mode architecture</p>
+  </div>
+
+  <nav class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#system-overview">System Overview</a></li>
+      <li><a href="#fe-be-boundary">FE / BE Boundary</a></li>
+      <li><a href="#database">Database Schema</a></li>
+      <li><a href="#api-layer">API Layer</a></li>
+      <li><a href="#auth">Authentication & Authorization</a></li>
+      <li><a href="#scoring">Business Logic: Scoring</a></li>
+      <li><a href="#espn">ESPN Sync Pipeline</a></li>
+      <li><a href="#demo-mode">Demo Mode Architecture</a></li>
+      <li><a href="#data-flows">Key Data Flows</a></li>
+      <li><a href="#file-map">Critical File Map</a></li>
+    </ol>
+  </nav>
+
+
+  <!-- ═══════════════════════════════ 1. SYSTEM OVERVIEW ═══════════════════════════════ -->
+  <h2 id="system-overview">1. System Overview</h2>
+
+  <p>Super 8s is a Next.js 16 App Router application. Users pick <strong>8 NCAA tournament teams</strong>, score <code>seed × wins</code>, and compete on a live leaderboard. The app has two parallel execution paths: the <strong>real app</strong> (auth-gated, Neon PostgreSQL via Prisma) and a <strong>public demo mode</strong> (no auth, pure in-memory React context).</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph TD
+    subgraph Client["Browser"]
+        SC["Server Components\n(RSC — no bundle)"]
+        CC["Client Components\n('use client')"]
+    end
+
+    subgraph NextJS["Next.js 16 App Router (Vercel Edge + Node)"]
+        MW["middleware.ts\n(Edge runtime — auth guard)"]
+        RSC["RSC Page / Layout\n(server-only render)"]
+        API["Route Handlers\n/api/**"]
+        AUTH["NextAuth v5\n/api/auth/**"]
+        CRON["Cron Handler\n/api/cron/sync"]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        PRISMA["Prisma 7 ORM\n(@prisma/adapter-neon)"]
+        NEON["Neon PostgreSQL\n(serverless)"]
+        ESPN["ESPN Public API\n(external)"]
+    end
+
+    subgraph Demo["Demo Mode (pure React)"]
+        CTX["DemoProvider Context"]
+        ENG["Game Sequence Engine\n(demo-game-sequence.ts)"]
+        DATA["Static Demo Data\n(demo-data.ts)"]
+    end
+
+    SC -->|"fetch() calls\nor direct Prisma"| RSC
+    CC -->|"fetch()"| API
+    MW -->|"allow/redirect"| RSC
+    RSC --> PRISMA
+    API --> PRISMA
+    AUTH --> PRISMA
+    CRON -->|"syncTournamentData()"| ESPN
+    CRON --> PRISMA
+    PRISMA --> NEON
+    CTX --> ENG
+    ENG --> DATA
+    CC -.->|"demoMode=true\nskips fetch"| CTX
+
+    style Demo fill:#1a1a2e,stroke:#7c3aed
+    style DataLayer fill:#0d2015,stroke:#3fb950
+    style NextJS fill:#0d1a2e,stroke:#58a6ff
+    </pre>
+  </div>
+
+
+  <!-- ═══════════════════════════════ 2. FE / BE BOUNDARY ═══════════════════════════════ -->
+  <h2 id="fe-be-boundary">2. Frontend / Backend Boundary</h2>
+
+  <p>Next.js App Router blurs the traditional FE/BE line. Here's exactly where each concern lives:</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph LR
+    subgraph FE["FRONTEND (browser bundle)"]
+        direction TB
+        F1["Client Components\n'use client'"]
+        F2["React state / hooks / effects"]
+        F3["shadcn/ui primitives"]
+        F4["DemoProvider context\n(demo mode only)"]
+        F1 --- F2
+        F2 --- F3
+        F3 --- F4
+    end
+
+    subgraph SHARED["SHARED (RSC — zero bundle impact)"]
+        direction TB
+        S1["Page / Layout components\n(server-rendered HTML)"]
+        S2["Direct Prisma calls\n(in server components / layouts)"]
+        S3["scoring.ts\nbracket-ppr.ts"]
+        S1 --- S2
+        S2 --- S3
+    end
+
+    subgraph BE["BACKEND (Node.js / Edge)"]
+        direction TB
+        B1["Route Handlers\n/api/**"]
+        B2["middleware.ts\n(Edge runtime)"]
+        B3["auth.ts / auth.config.ts"]
+        B4["espn.ts sync logic"]
+        B5["Prisma ORM + Neon"]
+        B1 --- B2
+        B2 --- B3
+        B3 --- B4
+        B4 --- B5
+    end
+
+    FE -->|"fetch() →"| BE
+    SHARED -->|"runs on server,\nsends HTML to"| FE
+    </pre>
+  </div>
+
+  <h3>Component Classification</h3>
+  <table>
+    <tr><th>Component / File</th><th>Type</th><th>Why</th></tr>
+    <tr><td><code>(protected)/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Checks session, redirects to /login</td></tr>
+    <tr><td><code>admin/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Checks admin role, redirects non-admins</td></tr>
+    <tr><td><code>leaderboard/page.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Calls <code>computeLeaderboard()</code> directly (Prisma)</td></tr>
+    <tr><td><code>picks/page.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Fetches teams + existing picks from Prisma</td></tr>
+    <tr><td><code>LeaderboardTable</code></td><td><span class="badge badge-fe">Client</span></td><td>Sorting interactions, tooltip state</td></tr>
+    <tr><td><code>PicksForm</code></td><td><span class="badge badge-fe">Client</span></td><td>Selection state, submit handler</td></tr>
+    <tr><td><code>ScoresGrid</code></td><td><span class="badge badge-fe">Client</span></td><td>Auto-refresh interval (60s)</td></tr>
+    <tr><td><code>SimulatorPanel</code></td><td><span class="badge badge-fe">Client</span></td><td>Hypothetical override state</td></tr>
+    <tr><td><code>DemoControlPanel</code></td><td><span class="badge badge-fe">Client</span></td><td>Timeline scrubber, play/pause, all interactivity</td></tr>
+    <tr><td><code>LeaderboardHistoryChart</code></td><td><span class="badge badge-fe">Client</span></td><td>Recharts, cursor drag state</td></tr>
+    <tr><td><code>scoring.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Pure functions — used server-side in leaderboard API + client-side in simulator</td></tr>
+    <tr><td><code>bracket-ppr.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Pure algorithm — used in scoring.ts and demo context</td></tr>
+  </table>
+
+
+  <!-- ═══════════════════════════════ 3. DATABASE ═══════════════════════════════ -->
+  <h2 id="database">3. Database Schema</h2>
+
+  <p>Provider: <strong>Neon</strong> (serverless PostgreSQL). ORM: <strong>Prisma 7</strong> with <code>@prisma/adapter-neon</code>. Client generated to non-default path <code>src/generated/prisma</code>.</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+erDiagram
+    User {
+        string id PK
+        string email UK
+        string name
+        string image
+        enum role "USER|ADMIN|SUPERADMIN"
+        bool isPaid
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Pick {
+        string id PK
+        string userId FK
+        string teamId FK "opt - teamId or playInSlotId"
+        string playInSlotId FK "opt - one must be set"
+        string charityPreference
+        datetime createdAt
+    }
+
+    Team {
+        string id PK
+        string espnId UK
+        string name
+        string shortName
+        int seed "1-16"
+        enum region "East|West|South|Midwest"
+        bool isPlayIn
+        bool eliminated
+        int wins
+        string logoUrl
+    }
+
+    PlayInSlot {
+        string id PK
+        int seed "composite UK with region"
+        string region "composite UK with seed"
+        string team1Id FK
+        string team2Id FK
+        string winnerId FK "set when play-in resolves"
+    }
+
+    TournamentGame {
+        string id PK
+        string espnGameId UK
+        int round "0=PlayIn 1-6=R64-Champ"
+        string team1Id FK
+        string team2Id FK
+        string winnerId FK "nullable"
+        json scores
+        enum status "SCHEDULED|IN_PROGRESS|FINAL"
+        datetime startTime
+    }
+
+    AppSettings {
+        string id PK "always 'main'"
+        datetime picksDeadline
+        json payoutStructure
+        json defaultCharities
+    }
+
+    ContentPage {
+        string id PK
+        string slug UK
+        string title
+        text content
+        bool isPublished
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    User ||--o{ Pick : "has"
+    Team ||--o{ Pick : "picked via"
+    PlayInSlot ||--o{ Pick : "picked via"
+    Team ||--o{ PlayInSlot : "team1"
+    Team ||--o{ PlayInSlot : "team2"
+    Team ||--o| PlayInSlot : "winner"
+    Team ||--o{ TournamentGame : "team1"
+    Team ||--o{ TournamentGame : "team2"
+    Team ||--o{ TournamentGame : "winner"
+    </pre>
+  </div>
+
+  <h3>Key Schema Design Decisions</h3>
+  <ul>
+    <li><strong>PlayInSlot</strong> decouples play-in uncertainty from picks. Users can pick a "slot" before the play-in game resolves — <code>winnerId</code> is set once the game completes.</li>
+    <li><strong>Pick has dual FK</strong>: <code>teamId</code> (direct pick) OR <code>playInSlotId</code> (pick-a-slot). Exactly one is non-null.</li>
+    <li><strong>AppSettings singleton</strong>: always <code>id = "main"</code>. Use upsert to guarantee existence.</li>
+    <li><strong>Team.wins</strong> is the authoritative win count — incremented by ESPN sync, used in all score calculations.</li>
+    <li><strong>TournamentGame.round = 0</strong> means play-in. Rounds 1–6 map to R64 → Championship. Round 0 wins don't count toward user scores.</li>
+  </ul>
+
+
+  <!-- ═══════════════════════════════ 4. API LAYER ═══════════════════════════════ -->
+  <h2 id="api-layer">4. API Layer</h2>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph TD
+    subgraph UserRoutes["User API (session-gated)"]
+        P_GET["GET /api/picks\nFetch user picks + relations"]
+        P_POST["POST /api/picks\nSubmit 8 picks (before deadline)"]
+        P_PUT["PUT /api/picks\nReplace picks atomically"]
+        L_GET["GET /api/leaderboard\nCompute + return LeaderboardEntry[]"]
+        S_GET["GET /api/scores\nFetch live ESPN games (60s cache)"]
+    end
+
+    subgraph AdminRoutes["Admin API (ADMIN|SUPERADMIN only)"]
+        AU_GET["GET /api/admin/users"]
+        AU_PATCH["PATCH /api/admin/users\nisPaid + role edits"]
+        AS_GET["GET /api/admin/settings"]
+        AS_PUT["PUT /api/admin/settings\ndeadline, payouts, charities"]
+        ASYNC["POST /api/admin/sync\nManual ESPN sync trigger"]
+        AC["GET|POST|PUT|DELETE\n/api/admin/content\nCMS CRUD"]
+    end
+
+    subgraph SystemRoutes["System Routes"]
+        NEXTAUTH["ALL /api/auth/**\nNextAuth handlers"]
+        CRON["GET /api/cron/sync\nVercel cron (Bearer token)"]
+    end
+
+    DB[(Neon PostgreSQL)]
+    ESPN[ESPN API]
+
+    P_GET & P_POST & P_PUT --> DB
+    L_GET -->|"computeLeaderboard()\nno-store cache"| DB
+    S_GET -->|"fetchESPNScoreboard()\n60s revalidate"| ESPN
+    AU_GET & AU_PATCH --> DB
+    AS_GET & AS_PUT --> DB
+    ASYNC -->|"syncTournamentData()"| ESPN
+    ASYNC --> DB
+    AC --> DB
+    NEXTAUTH --> DB
+    CRON -->|"syncTournamentData()\nevery 5 min"| ESPN
+    CRON --> DB
+    </pre>
+  </div>
+
+  <h3>Caching Strategy</h3>
+  <table>
+    <tr><th>Route</th><th>Cache</th><th>Reason</th></tr>
+    <tr><td><code>GET /api/leaderboard</code></td><td><code>no-store</code></td><td>Scores change every game — always fresh</td></tr>
+    <tr><td><code>GET /api/scores</code></td><td><code>revalidate: 60</code></td><td>ESPN data cached 60s — reduces external calls</td></tr>
+    <tr><td><code>GET /api/admin/users</code></td><td>no-store</td><td>Admin needs current paid/role state</td></tr>
+  </table>
+
+
+  <!-- ═══════════════════════════════ 5. AUTH ═══════════════════════════════ -->
+  <h2 id="auth">5. Authentication &amp; Authorization</h2>
+
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant App as Next.js App
+    participant MW as middleware.ts (Edge)
+    participant Auth as NextAuth v5
+    participant DB as Neon DB
+    participant Email as Resend (Email)
+
+    U->>App: Visit /picks (protected)
+    App->>MW: Check route
+    MW->>Auth: auth.config.ts authorized()
+    Auth-->>MW: No session → unauthorized
+    MW-->>U: Redirect to /login
+
+    U->>App: POST magic link request
+    App->>Auth: signIn("resend", {email})
+    Auth->>Email: Send magic link via Resend
+    Email-->>U: Email with token link
+
+    U->>App: Click link → /api/auth/callback
+    App->>Auth: Verify token
+    Auth->>DB: Create/find User, create Session
+    Note over Auth,DB: If first user → auto-promote to SUPERADMIN
+    Auth->>DB: Attach role + isPaid to session
+    Auth-->>U: Redirect to /picks (session cookie)
+
+    U->>App: Visit /admin (ADMIN route)
+    App->>MW: Check route
+    MW->>Auth: Check session.user.role
+    Auth-->>MW: Role = USER → unauthorized
+    MW-->>U: Redirect to /leaderboard
+    </pre>
+  </div>
+
+  <h3>Config Split (Edge Safety)</h3>
+  <div class="callout">
+    <strong>auth.config.ts</strong> — Edge-safe. No Prisma imports. Defines route protection logic only. Used by <code>middleware.ts</code> which runs in the Edge runtime.<br><br>
+    <strong>auth.ts</strong> — Full config. Imports Prisma adapter + Resend provider. Used by API routes and server components. <em>Never imported in middleware.</em>
+  </div>
+
+  <h3>Role Hierarchy</h3>
+  <table>
+    <tr><th>Role</th><th>Can Do</th></tr>
+    <tr><td><code>USER</code></td><td>View leaderboard / scores / picks; submit own picks before deadline</td></tr>
+    <tr><td><code>ADMIN</code></td><td>Everything USER can + edit settings, manage users (isPaid, roles), trigger ESPN sync, manage CMS</td></tr>
+    <tr><td><code>SUPERADMIN</code></td><td>Everything ADMIN can + can demote other ADMINs. Cannot be demoted by ADMINs.</td></tr>
+  </table>
+
+
+  <!-- ═══════════════════════════════ 6. SCORING ═══════════════════════════════ -->
+  <h2 id="scoring">6. Business Logic: Scoring</h2>
+
+  <p>All scoring logic lives in <code>src/lib/scoring.ts</code>. The bracket-aware PPR algorithm lives in <code>src/lib/bracket-ppr.ts</code>.</p>
+
+  <div class="formula-box">
+    <div><span class="label">Score (per team):</span> <span class="eq">seed × wins</span>  (rounds 1–6 only; play-in round 0 = 0)</div>
+    <div><span class="label">PPR (potential remaining):</span> <span class="eq">seed × max(0, 6 − wins)</span>  (alive teams only; 0 if eliminated)</div>
+    <div><span class="label">TPS (total projected):</span> <span class="eq">currentScore + PPR</span></div>
+    <div><span class="label">Leaderboard sort:</span> <span class="eq">TPS desc → currentScore desc → name asc</span></div>
+  </div>
+
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    subgraph "computeLeaderboard() — scoring.ts"
+        A["Load all users + picks\nfrom Prisma"] --> B["For each user:"]
+        B --> C["resolvePickTeam()\nhandle PlayInSlot → Team"]
+        C --> D["Sum seed × wins\n= currentScore"]
+        D --> E{"Bracket-aware PPR?"}
+        E -->|Yes| F["computeBracketAwarePPR()\nbracket-ppr.ts"]
+        E -->|No| G["Naive: seed × (6−wins)\nper alive team"]
+        F --> H["TPS = currentScore + PPR"]
+        G --> H
+        H --> I["Sort: TPS → score → name"]
+        I --> J["Top 4 get charity preference"]
+        J --> K["Return LeaderboardEntry[]"]
+    end
+    </pre>
+  </div>
+
+  <h3>Bracket-Aware PPR Algorithm</h3>
+  <p>Naive PPR ignores that two picked teams in the same bracket region can't both win all games. <code>bracket-ppr.ts</code> resolves this with a greedy bottom-up algorithm:</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart LR
+    subgraph "bracket-ppr.ts: computeBracketAwarePPR()"
+        A["Map picked alive teams\nto bracket slots\nseedToSlot(seed) → 0-7"] --> B
+
+        subgraph Intra["Phase 1: Intra-Region R32→E8"]
+            B["Group by region\n4 regions × up to 2 teams"]
+            B --> C["Walk merge levels\nR32 → S16 → E8"]
+            C --> D{"Two teams\ncollide at merge?"}
+            D -->|Yes| E["Compare seed × remaining rounds\nHigher PPR team advances\nLoser capped at mergeRound−1"]
+            D -->|No| F["Both advance freely"]
+            E --> G["Continue to next round"]
+            F --> G
+        end
+
+        subgraph Cross["Phase 2: Cross-Region F4 (Round 5)"]
+            G --> H["East champ vs West champ\nSouth champ vs Midwest champ"]
+            H --> I["Same comparison logic\nLoser capped at Round 4"]
+        end
+
+        subgraph Final["Phase 3: Championship (Round 6)"]
+            I --> J["F4 winners compared\nLoser capped at Round 5"]
+        end
+
+        J --> K["Per-team PPR =\nseed × (maxReachableRound − wins)"]
+        K --> L["Return {totalPPR, perTeam: Map}"]
+    end
+    </pre>
+  </div>
+
+
+  <!-- ═══════════════════════════════ 7. ESPN SYNC ═══════════════════════════════ -->
+  <h2 id="espn">7. ESPN Sync Pipeline</h2>
+
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant Cron as Vercel Cron\n(every 5 min)
+    participant API as /api/cron/sync
+    participant ESPN as ESPN Public API
+    participant DB as Neon DB
+    participant Slot as PlayInSlot
+
+    Cron->>API: GET (Authorization: Bearer CRON_SECRET)
+    API->>ESPN: fetchESPNScoreboard() [no-cache]
+    ESPN-->>API: ESPNScoreboardResponse
+
+    loop For each ESPNEvent
+        API->>API: Parse round from competition.notes[0].headline
+        API->>API: Extract region (East/West/South/Midwest)
+        API->>DB: Upsert Team (espnId unique key)
+        API->>DB: Upsert TournamentGame (espnGameId unique key)
+
+        alt Game status = FINAL
+            API->>DB: winner.wins += 1
+            API->>DB: loser.eliminated = true
+            alt Round = 0 (Play-in)
+                API->>Slot: PlayInSlot.winnerId = winnerId
+            end
+        end
+    end
+
+    API-->>Cron: SyncResult {gamesUpdated, teamsUpdated, playInResolved, errors}
+    </pre>
+  </div>
+
+  <div class="callout">
+    <strong>Round Detection</strong>: ESPN embeds the round name in <code>competition.notes[0].headline</code> (e.g. <code>"Elite Eight - East Regional"</code>). The sync function parses this string to map to round numbers 0–6.
+  </div>
+
+
+  <!-- ═══════════════════════════════ 8. DEMO MODE ═══════════════════════════════ -->
+  <h2 id="demo-mode">8. Demo Mode Architecture</h2>
+
+  <p>The demo at <code>/demo</code> is a <strong>full app mirror with zero auth and zero DB calls</strong>. Every real component is reused via a <code>demoMode</code> prop pattern.</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+graph TD
+    subgraph DemoLayout["/demo/layout.tsx"]
+        DP["DemoProvider\ndemo-context.tsx"]
+        DCP["DemoControlPanel\n(fixed bottom bar)"]
+        WMARK["DEMO watermark badge"]
+    end
+
+    subgraph DemoContext["DemoProvider State (demo-context.tsx)"]
+        STATE["selectedYear\ngameIndex (-1 to 62)\nisPlaying + playSpeed\ncurrentPersona\ndemoUserPicks\ndemoSettings\ndemoUsers"]
+        COMPUTED["leaderboardData\nscoresData\nteamsData\naliveTeams\nleaderboardHistory\n(all 63 snapshots)"]
+        SESSION["Fake session\n(matches persona)"]
+    end
+
+    subgraph Engine["Game Sequence Engine\n(demo-game-sequence.ts)"]
+        GSE["generateDemoGameSequence(teams)\n→ ~63 DemoGameEvent[]"]
+        CSG["computeStateAtGame(games, idx)\n→ Map teamId → wins/eliminated"]
+        CLG["computeLeaderboardAtGame(...)\n→ LeaderboardEntry[]"]
+        CGS["computeGamesAsLiveData(...)\n→ LiveGameData[]"]
+        CTP["computeTeamsForPicks(...)\n→ Team[]"]
+    end
+
+    subgraph DemoData["Static Demo Data (demo-data.ts)"]
+        TEAMS["64 real 2025 teams\nwinsAtRound[] elimAtRound[]"]
+        USERS["12 demo users\npre-set 8-team picks each"]
+    end
+
+    subgraph DemoPages["/demo/* pages"]
+        DL["/demo/leaderboard\nLeaderboardTable\n+ HistoryChart"]
+        DP2["/demo/picks\nPicksForm (all view modes)"]
+        DS["/demo/scores\nScoresGrid"]
+        DSim["/demo/simulator\nSimulatorPanel"]
+        DA["/demo/admin/**\nUserTable, SettingsForm, SyncButton"]
+    end
+
+    DemoData --> Engine
+    Engine --> DemoContext
+    DemoContext --> DemoPages
+    DemoLayout --> DemoContext
+    DemoLayout --> DemoPages
+
+    style DemoLayout fill:#1a1a0d,stroke:#d97706
+    style DemoContext fill:#1a1030,stroke:#7c3aed
+    style Engine fill:#0d1a2e,stroke:#58a6ff
+    </pre>
+  </div>
+
+  <h3>The <code>demoMode</code> Prop Pattern</h3>
+  <p>Every shared component has a dual execution path based on <code>demoMode?: boolean</code>:</p>
+
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart LR
+    subgraph Real["Real App"]
+        R1["Page fetches from Prisma\nor calls /api/*"]
+        R2["Passes data as\ninitialData prop"]
+        R3["Component fetches\n+ auto-refreshes via fetch()"]
+    end
+
+    subgraph Demo["Demo Mode"]
+        D1["DemoProvider computes data\nfrom game engine"]
+        D2["Page reads from\nDemoContext"]
+        D3["Component receives\ninitialData prop"]
+        D4["useEffect syncs\nwhen prop changes"]
+        D5["No fetch() calls\nNo auto-refresh"]
+    end
+
+    R1 --> R2 --> R3
+    D1 --> D2 --> D3 --> D4 --> D5
+
+    note1["Same component\ndemo/leaderboard/page.tsx\nreuses LeaderboardTable"]
+    </pre>
+  </div>
+
+  <h3>Timeline Engine</h3>
+  <p>The game sequence engine derives ~63 individual games from round-level data stored in <code>demo-data.ts</code>:</p>
+  <ul>
+    <li><strong>R64 (Round 1)</strong>: Standard NCAA seed matchups (1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15) per region = 32 games</li>
+    <li><strong>R32–E8</strong>: Pairs winners by bracket position = 16 + 8 + 4 games</li>
+    <li><strong>F4</strong>: East vs West, South vs Midwest = 2 games</li>
+    <li><strong>Championship</strong>: 1 game</li>
+    <li><strong>Play-in games</strong>: Prepended as Round 0</li>
+  </ul>
+
+
+  <!-- ═══════════════════════════════ 9. DATA FLOWS ═══════════════════════════════ -->
+  <h2 id="data-flows">9. Key Data Flows</h2>
+
+  <h3>Picks Submission</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant PF as PicksForm (Client)
+    participant API as POST /api/picks
+    participant DB as Neon DB
+
+    U->>PF: Selects 8 teams (or play-in slots)
+    PF->>API: POST {teamIds[], playInSlotIds[], charityPreference}
+    API->>DB: Check AppSettings.picksDeadline
+    alt After deadline
+        API-->>PF: 400 "Picks deadline has passed"
+    end
+    API->>DB: Check existing picks count
+    alt > 8 picks
+        API-->>PF: 400 "Maximum 8 picks allowed"
+    end
+    API->>DB: createMany() Pick records
+    API-->>PF: 201 {picks[]}
+    PF-->>U: Success toast + refresh
+    </pre>
+  </div>
+
+  <h3>Leaderboard Computation</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant P as /leaderboard page (RSC)
+    participant SL as scoring.ts
+    participant BPR as bracket-ppr.ts
+    participant DB as Neon DB
+
+    P->>DB: findMany Users with picks + teams + playInSlots
+    DB-->>P: users[]
+    P->>SL: computeLeaderboard(users)
+    loop For each user
+        SL->>SL: resolvePickTeam() → effective Team
+        SL->>SL: sum seed × wins = currentScore
+        SL->>BPR: computeBracketAwarePPR(aliveTeamIds, teamInfoMap)
+        BPR-->>SL: {totalPPR, perTeam}
+        SL->>SL: tps = currentScore + totalPPR
+    end
+    SL->>SL: Sort by TPS desc → score desc → name asc
+    SL->>SL: Top 4 → attach charityPreference
+    SL-->>P: LeaderboardEntry[]
+    P-->>Browser: Rendered HTML table
+    </pre>
+  </div>
+
+  <h3>Demo Timeline Advance</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant CP as DemoControlPanel
+    participant CTX as DemoProvider
+    participant ENG as demo-game-sequence.ts
+    participant COMP as LeaderboardTable / ScoresGrid / etc.
+
+    U->>CP: Drag scrubber to gameIndex=42
+    CP->>CTX: setGameIndex(42)
+    CTX->>ENG: computeLeaderboardAtGame(games, demoUserPicks, 42)
+    ENG-->>CTX: LeaderboardEntry[]
+    CTX->>ENG: computeGamesAsLiveData(games, 42)
+    ENG-->>CTX: LiveGameData[]
+    CTX->>ENG: computeTeamsForPicks(games, 42)
+    ENG-->>CTX: Team[]
+    CTX-->>COMP: Context value updated (useMemo)
+    COMP-->>U: Re-renders with game 42 state
+    Note over CTX,COMP: Zero API calls — pure in-memory computation
+    </pre>
+  </div>
+
+
+  <!-- ═══════════════════════════════ 10. FILE MAP ═══════════════════════════════ -->
+  <h2 id="file-map">10. Critical File Map</h2>
+
+  <table>
+    <tr><th>File</th><th>Layer</th><th>Purpose</th></tr>
+    <tr><td><code>prisma/schema.prisma</code></td><td><span class="badge badge-db">DB</span></td><td>Source of truth for all models, relations, enums</td></tr>
+    <tr><td><code>src/generated/prisma/</code></td><td><span class="badge badge-db">DB</span></td><td>Prisma client (do not edit — regenerated by migrations)</td></tr>
+    <tr><td><code>src/lib/prisma.ts</code></td><td><span class="badge badge-be">Server</span></td><td>Prisma singleton with Neon HTTP adapter</td></tr>
+    <tr><td><code>src/lib/auth.ts</code></td><td><span class="badge badge-be">Server</span></td><td>Full NextAuth config: Prisma adapter, Resend, session callbacks</td></tr>
+    <tr><td><code>src/lib/auth.config.ts</code></td><td><span class="badge badge-be">Edge</span></td><td>Edge-safe auth config — route protection callbacks only</td></tr>
+    <tr><td><code>src/middleware.ts</code></td><td><span class="badge badge-be">Edge</span></td><td>Route guards — imports auth.config only</td></tr>
+    <tr><td><code>src/lib/espn.ts</code></td><td><span class="badge badge-be">Server</span></td><td>ESPN fetch, transform, full sync logic (upserts teams + games)</td></tr>
+    <tr><td><code>src/lib/scoring.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>ALL scoring: computeLeaderboard, computeUserScore, computeSimulatedLeaderboard</td></tr>
+    <tr><td><code>src/lib/bracket-ppr.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Bracket-aware PPR algorithm — resolves bracket conflicts for accurate TPS</td></tr>
+    <tr><td><code>src/lib/demo-context.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>DemoProvider — all demo state + computed leaderboard/scores/teams</td></tr>
+    <tr><td><code>src/lib/demo-game-sequence.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Game-by-game engine: generates 63 games, computes state at any index</td></tr>
+    <tr><td><code>src/lib/demo-data.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>2025 NCAA teams (winsAtRound/elimAtRound) + 12 demo users</td></tr>
+    <tr><td><code>src/lib/tournament-data.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Year registry — add future tournament years here</td></tr>
+    <tr><td><code>src/app/api/picks/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>GET/POST/PUT picks — deadline enforcement, 8-pick limit</td></tr>
+    <tr><td><code>src/app/api/leaderboard/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>GET leaderboard — calls computeLeaderboard, no-store cache</td></tr>
+    <tr><td><code>src/app/api/scores/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>GET live scores — calls fetchESPNScoreboard, 60s cache</td></tr>
+    <tr><td><code>src/app/api/cron/sync/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>Vercel cron: syncs ESPN every 5 min, bearer-token protected</td></tr>
+    <tr><td><code>src/app/(protected)/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Auth gate for /picks, /leaderboard, /scores, /simulator</td></tr>
+    <tr><td><code>src/app/admin/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Admin gate — redirects non-admin users</td></tr>
+    <tr><td><code>src/app/demo/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Wraps demo in DemoProvider + DemoControlPanel</td></tr>
+    <tr><td><code>src/components/picks/picks-form.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>8-pick selection form + view modes (Region / All / By Seed)</td></tr>
+    <tr><td><code>src/components/leaderboard/leaderboard-table.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Sortable standings table with charity display for top 4</td></tr>
+    <tr><td><code>src/components/leaderboard/leaderboard-history-chart.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Recharts line chart: 24 series (12 users × score + TPS projection)</td></tr>
+    <tr><td><code>src/components/demo/demo-control-panel.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Fixed timeline bar: year, persona, scrubber, play/pause, speed</td></tr>
+    <tr><td><code>src/components/picks/bracket-view.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Interactive bracket with conflict detection + zoom controls</td></tr>
+    <tr><td><code>src/types/index.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Shared TypeScript types + NextAuth module augmentation</td></tr>
+  </table>
+
+  <div style="margin-top:64px; border-top:1px solid var(--border); padding-top:20px; color:var(--muted); font-size:0.82em;">
+    Generated for Super 8s codebase · Stack: Next.js 16 · React 19 · Prisma 7 · Neon PostgreSQL · NextAuth v5 · Tailwind v4
+  </div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      background: '#161b22',
+      mainBkg: '#1c2128',
+      nodeBorder: '#30363d',
+      clusterBkg: '#1c2128',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#161b22',
+      lineColor: '#58a6ff',
+      primaryColor: '#1c2128',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#58a6ff',
+      secondaryColor: '#2a1d3e',
+      tertiaryColor: '#0d2015',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+      fontSize: '13px',
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' },
+    sequence: { actorMargin: 60, messageMargin: 30 },
+    er: { diagramPadding: 30 },
+  });
+</script>
+</body>
+</html>

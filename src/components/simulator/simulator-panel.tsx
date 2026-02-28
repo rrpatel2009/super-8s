@@ -1,0 +1,565 @@
+"use client"
+
+/**
+ * SimulatorPanel — Bracket Game Picker
+ *
+ * Shows all tournament games grouped by round:
+ *   - Completed games (i ≤ gameIndex): locked, show winner/loser result
+ *   - Upcoming games (i > gameIndex): clickable Team A vs Team B cards
+ *
+ * As user picks winners, a simulated leaderboard updates on the right.
+ *
+ * Works in two modes:
+ *   - Demo mode: pass `gameSequence` + `gameIndex` for full bracket history
+ *   - Real app mode: computes upcoming matchups from `aliveTeams` bracket positions
+ */
+
+import { useState, useMemo } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Trophy, RotateCcw, ChevronDown, ChevronRight, Lock, LayoutTemplate, List } from "lucide-react"
+import { computeSimulatedLeaderboard, type HypotheticalState } from "@/lib/scoring"
+import { seedToSlot } from "@/lib/bracket-ppr"
+import type { LeaderboardEntry } from "@/types"
+import type { Team } from "@/generated/prisma"
+import type { DemoGameEvent } from "@/lib/demo-game-sequence"
+import { AdvancingBracket } from "@/components/bracket/advancing-bracket"
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SimulatorPanelProps {
+  initialLeaderboard: LeaderboardEntry[]
+  /** Alive teams — used for real-app matchup computation */
+  aliveTeams: Team[]
+  /** All teams incl. eliminated — used for logo lookups in demo bracket */
+  allTeams?: Team[]
+  /** Demo: explicit game sequence */
+  gameSequence?: DemoGameEvent[]
+  /** Demo: current timeline position */
+  gameIndex?: number
+}
+
+/** Unified game representation for both demo and real-app mode */
+interface MatchupGame {
+  gameId: string
+  round: number
+  roundLabel: string
+  region: string
+  isLocked: boolean
+  teamAId: string
+  teamAName: string
+  teamAShortName: string
+  teamASeed: number
+  teamAWins: number
+  teamALogo: string | null
+  teamBId: string
+  teamBName: string
+  teamBShortName: string
+  teamBSeed: number
+  teamBWins: number
+  teamBLogo: string | null
+  /** Only set for locked games — which team actually won */
+  actualWinnerId?: string
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ROUND_LABELS: Record<number, string> = {
+  1: "Round of 64",
+  2: "Round of 32",
+  3: "Sweet 16",
+  4: "Elite 8",
+  5: "Final Four",
+  6: "Championship",
+}
+
+/** Bracket merge pairs for real-app matchup computation */
+const REGION_MERGE_PAIRS: Array<[number, number[], number[]]> = [
+  [2, [0], [1]], [2, [2], [3]], [2, [4], [5]], [2, [6], [7]],
+  [3, [0, 1], [2, 3]], [3, [4, 5], [6, 7]],
+  [4, [0, 1, 2, 3], [4, 5, 6, 7]],
+]
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Build upcoming matchup list from alive teams' bracket positions (real-app mode) */
+function computeUpcomingMatchups(aliveTeams: Team[]): MatchupGame[] {
+  const matchups: MatchupGame[] = []
+  const regions = ["East", "West", "South", "Midwest"]
+
+  for (const region of regions) {
+    const regional = aliveTeams
+      .filter(t => t.region === region && !t.isPlayIn)
+      .map(t => ({ ...t, slot: seedToSlot(t.seed) }))
+      .filter(t => t.slot !== -1)
+
+    if (regional.length < 2) continue
+
+    for (const [round, groupA, groupB] of REGION_MERGE_PAIRS) {
+      const inA = regional.filter(t => groupA.includes(t.slot) && t.wins === round - 1)
+      const inB = regional.filter(t => groupB.includes(t.slot) && t.wins === round - 1)
+      if (inA.length > 0 && inB.length > 0) {
+        const tA = inA[0], tB = inB[0]
+        // Show lower seed (better) first
+        const [first, second] = tA.seed <= tB.seed ? [tA, tB] : [tB, tA]
+        matchups.push({
+          gameId: `${region}-r${round}-${first.id}-vs-${second.id}`,
+          round, roundLabel: ROUND_LABELS[round], region,
+          isLocked: false,
+          teamAId: first.id, teamAName: first.name, teamAShortName: first.shortName,
+          teamASeed: first.seed, teamAWins: first.wins, teamALogo: first.logoUrl,
+          teamBId: second.id, teamBName: second.name, teamBShortName: second.shortName,
+          teamBSeed: second.seed, teamBWins: second.wins, teamBLogo: second.logoUrl,
+        })
+      }
+    }
+  }
+
+  // Final Four (round 5)
+  const f4Pairs: [string, string][] = [["East", "West"], ["South", "Midwest"]]
+  for (const [rA, rB] of f4Pairs) {
+    const champA = aliveTeams.find(t => t.region === rA && !t.isPlayIn && t.wins >= 4 && t.wins < 5)
+    const champB = aliveTeams.find(t => t.region === rB && !t.isPlayIn && t.wins >= 4 && t.wins < 5)
+    if (champA && champB) {
+      const [first, second] = champA.seed <= champB.seed ? [champA, champB] : [champB, champA]
+      matchups.push({
+        gameId: `f4-${first.id}-vs-${second.id}`,
+        round: 5, roundLabel: "Final Four", region: "Final Four",
+        isLocked: false,
+        teamAId: first.id, teamAName: first.name, teamAShortName: first.shortName,
+        teamASeed: first.seed, teamAWins: first.wins, teamALogo: first.logoUrl,
+        teamBId: second.id, teamBName: second.name, teamBShortName: second.shortName,
+        teamBSeed: second.seed, teamBWins: second.wins, teamBLogo: second.logoUrl,
+      })
+    }
+  }
+
+  // Championship (round 6)
+  const finalists = aliveTeams.filter(t => !t.isPlayIn && t.wins === 5)
+  if (finalists.length === 2) {
+    const [a, b] = finalists
+    const [first, second] = a.seed <= b.seed ? [a, b] : [b, a]
+    matchups.push({
+      gameId: `championship-${first.id}-vs-${second.id}`,
+      round: 6, roundLabel: "Championship", region: "Championship",
+      isLocked: false,
+      teamAId: first.id, teamAName: first.name, teamAShortName: first.shortName,
+      teamASeed: first.seed, teamAWins: first.wins, teamALogo: first.logoUrl,
+      teamBId: second.id, teamBName: second.name, teamBShortName: second.shortName,
+      teamBSeed: second.seed, teamBWins: second.wins, teamBLogo: second.logoUrl,
+    })
+  }
+
+  return matchups
+}
+
+/** Convert a DemoGameEvent to MatchupGame (show lower seed first) */
+function demoEventToMatchup(g: DemoGameEvent, isLocked: boolean, logoMap: Map<string, string | null>): MatchupGame {
+  const showWinnerFirst = g.winnerSeed <= g.loserSeed
+  const teamA = showWinnerFirst
+    ? { id: g.winnerId, name: g.winnerName, short: g.winnerShortName, seed: g.winnerSeed }
+    : { id: g.loserId, name: g.loserName, short: g.loserShortName, seed: g.loserSeed }
+  const teamB = showWinnerFirst
+    ? { id: g.loserId, name: g.loserName, short: g.loserShortName, seed: g.loserSeed }
+    : { id: g.winnerId, name: g.winnerName, short: g.winnerShortName, seed: g.winnerSeed }
+
+  return {
+    gameId: g.gameId,
+    round: g.round,
+    roundLabel: g.roundLabel,
+    region: g.region,
+    isLocked,
+    teamAId: teamA.id, teamAName: teamA.name, teamAShortName: teamA.short,
+    teamASeed: teamA.seed, teamAWins: 0, teamALogo: logoMap.get(teamA.id) ?? null,
+    teamBId: teamB.id, teamBName: teamB.name, teamBShortName: teamB.short,
+    teamBSeed: teamB.seed, teamBWins: 0, teamBLogo: logoMap.get(teamB.id) ?? null,
+    actualWinnerId: isLocked ? g.winnerId : undefined,
+  }
+}
+
+// ─── Team chip (for clickable matchup cards) ──────────────────────────────────
+
+function TeamChip({
+  teamId, shortName, seed, logo, wins,
+  isSelected, isEliminated, isLocked,
+  onClick,
+}: {
+  teamId: string; shortName: string; seed: number; logo: string | null; wins: number
+  isSelected: boolean; isEliminated: boolean; isLocked: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      className={`flex-1 flex items-center gap-1.5 p-2 rounded-lg border text-left transition-all text-xs min-w-0 ${
+        isLocked
+          ? isEliminated
+            ? "border-border/30 bg-muted/10 opacity-40 cursor-default"
+            : "border-primary/30 bg-primary/5 cursor-default"
+          : isSelected
+          ? "border-primary bg-primary/15 shadow-sm"
+          : "border-border/60 bg-card hover:border-border hover:bg-muted/30 cursor-pointer"
+      }`}
+      onClick={isLocked ? undefined : onClick}
+      disabled={isLocked}
+      type="button"
+    >
+      {logo ? (
+        <img src={logo} alt="" className="h-5 w-5 object-contain shrink-0" />
+      ) : (
+        <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold shrink-0">
+          {shortName[0]}
+        </div>
+      )}
+      <span className={`font-semibold truncate flex-1 ${isEliminated && isLocked ? "line-through" : ""}`}>
+        {shortName}
+      </span>
+      <span className="text-muted-foreground shrink-0">#{seed}</span>
+      {isLocked && !isEliminated && (
+        <span className="text-primary text-[9px] font-bold shrink-0">✓</span>
+      )}
+      {isSelected && !isLocked && (
+        <span className="text-primary text-[9px] font-bold shrink-0">▶</span>
+      )}
+    </button>
+  )
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function SimulatorPanel({
+  initialLeaderboard,
+  aliveTeams,
+  allTeams,
+  gameSequence,
+  gameIndex,
+}: SimulatorPanelProps) {
+  const [gamePicks, setGamePicks] = useState<Record<string, string>>({})
+  // Rounds that are collapsed (defaults: completed rounds)
+  const [collapsedRounds, setCollapsedRounds] = useState<Set<number>>(() => new Set())
+
+  // ── Build logo lookup map ──────────────────────────────────────────────────
+  const logoMap = useMemo(() => {
+    const map = new Map<string, string | null>()
+    const source = allTeams ?? aliveTeams
+    for (const t of source) map.set(t.id, t.logoUrl)
+    return map
+  }, [allTeams, aliveTeams])
+
+  // ── Build unified game list ────────────────────────────────────────────────
+  const allGames = useMemo<MatchupGame[]>(() => {
+    if (gameSequence) {
+      const currentIdx = gameIndex ?? -1
+      return gameSequence.map(g => demoEventToMatchup(g, g.gameIndex <= currentIdx, logoMap))
+    }
+    return computeUpcomingMatchups(aliveTeams)
+  }, [gameSequence, gameIndex, aliveTeams, logoMap])
+
+  // ── Build hypothetical state from user's game picks ───────────────────────
+  const hypothetical = useMemo<HypotheticalState>(() => {
+    if (Object.keys(gamePicks).length === 0) return {}
+
+    // Base wins from leaderboard picks
+    const baseWins: Record<string, number> = {}
+    for (const entry of initialLeaderboard) {
+      for (const pick of entry.picks) {
+        baseWins[pick.teamId] = pick.wins
+      }
+    }
+
+    const hyp: HypotheticalState = {}
+
+    // Process games in sequence order so cascading picks compound correctly
+    const sorted = [...allGames].sort((a, b) => a.round - b.round)
+    for (const game of sorted) {
+      const pickedWinnerId = gamePicks[game.gameId]
+      if (!pickedWinnerId) continue
+
+      const pickedLoserId = pickedWinnerId === game.teamAId ? game.teamBId : game.teamAId
+
+      const currentWins = hyp[pickedWinnerId]?.wins ?? baseWins[pickedWinnerId] ?? 0
+      hyp[pickedWinnerId] = { wins: currentWins + 1, eliminated: false }
+      hyp[pickedLoserId] = { wins: baseWins[pickedLoserId] ?? 0, eliminated: true }
+    }
+
+    return hyp
+  }, [gamePicks, allGames, initialLeaderboard])
+
+  const simLeaderboard = computeSimulatedLeaderboard(initialLeaderboard, hypothetical)
+  const hasChanges = Object.keys(gamePicks).length > 0
+  const futureCount = allGames.filter(g => !g.isLocked).length
+  const pickedCount = Object.keys(gamePicks).length
+
+  // ── Group games by round ───────────────────────────────────────────────────
+  const roundGroups = useMemo(() => {
+    const groups = new Map<number, MatchupGame[]>()
+    for (const g of allGames) {
+      const arr = groups.get(g.round) ?? []
+      arr.push(g)
+      groups.set(g.round, arr)
+    }
+    return [...groups.entries()].sort((a, b) => a[0] - b[0])
+  }, [allGames])
+
+  function toggleRound(round: number) {
+    setCollapsedRounds(prev => {
+      const next = new Set(prev)
+      if (next.has(round)) next.delete(round)
+      else next.add(round)
+      return next
+    })
+  }
+
+  function pickGame(gameId: string, winnerId: string) {
+    setGamePicks(prev => {
+      const next = { ...prev }
+      if (prev[gameId] === winnerId) {
+        delete next[gameId]  // toggle off
+      } else {
+        next[gameId] = winnerId
+      }
+      return next
+    })
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* ── Left: Bracket game picker ─────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span>Bracket Picker</span>
+              {hasChanges && (
+                <Badge variant="outline" className="text-xs text-primary border-primary/40">
+                  {pickedCount}/{futureCount} predicted
+                </Badge>
+              )}
+            </div>
+            {hasChanges && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setGamePicks({})}
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                Reset
+              </Button>
+            )}
+          </CardTitle>
+          {futureCount === 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Tournament complete — all results are final.
+            </p>
+          )}
+          {futureCount > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Click a team to predict the winner. Leaderboard updates in real-time.
+            </p>
+          )}
+        </CardHeader>
+
+        <CardContent className="px-3 pb-4">
+          <Tabs defaultValue={gameSequence ? "bracket" : "list"}>
+            <TabsList className="w-full mb-3 h-7">
+              <TabsTrigger value="bracket" className="flex-1 gap-1 text-[10px] h-6">
+                <LayoutTemplate className="h-3 w-3" />
+                Bracket
+              </TabsTrigger>
+              <TabsTrigger value="list" className="flex-1 gap-1 text-[10px] h-6">
+                <List className="h-3 w-3" />
+                List
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Visual advancing bracket */}
+            <TabsContent value="bracket" className="mt-0">
+              {gameSequence ? (
+                <AdvancingBracket
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  teams={(allTeams ?? aliveTeams) as any[]}
+                  mode="simulator"
+                  gamePicks={gamePicks}
+                  onPickGame={pickGame}
+                  gameSequence={gameSequence}
+                  gameIndex={gameIndex ?? -1}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  Bracket view requires demo mode.
+                </p>
+              )}
+            </TabsContent>
+
+            {/* Existing list/accordion view */}
+            <TabsContent value="list" className="mt-0 space-y-2">
+          {roundGroups.map(([round, games]) => {
+            const allLocked = games.every(g => g.isLocked)
+            const isCollapsed = collapsedRounds.has(round)
+            const label = ROUND_LABELS[round] ?? `Round ${round}`
+            const picked = games.filter(g => !g.isLocked && gamePicks[g.gameId]).length
+            const future = games.filter(g => !g.isLocked).length
+
+            return (
+              <div key={round} className="rounded-lg border border-border/50 overflow-hidden">
+                {/* Round header */}
+                <button
+                  className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors ${
+                    allLocked
+                      ? "bg-muted/30 hover:bg-muted/50"
+                      : "bg-muted/10 hover:bg-muted/20"
+                  }`}
+                  onClick={() => toggleRound(round)}
+                >
+                  <div className="flex items-center gap-2">
+                    {isCollapsed
+                      ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                    }
+                    <span className={`text-sm font-semibold ${allLocked ? "text-muted-foreground" : ""}`}>
+                      {label}
+                    </span>
+                    {allLocked && (
+                      <Lock className="h-3 w-3 text-muted-foreground/50" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {allLocked ? (
+                      <span className="text-[10px] text-muted-foreground">{games.length} games</span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">
+                        {picked}/{future} picked
+                      </span>
+                    )}
+                  </div>
+                </button>
+
+                {/* Games list */}
+                {!isCollapsed && (
+                  <div className="px-3 py-2 space-y-1.5 bg-background/30">
+                    {games.map(game => {
+                      const pickedWinner = gamePicks[game.gameId]
+                      const isAWinner = game.actualWinnerId === game.teamAId
+                      const isBWinner = game.actualWinnerId === game.teamBId
+
+                      return (
+                        <div key={game.gameId} className="space-y-0.5">
+                          {/* Region/context label for multi-region rounds */}
+                          {(round >= 5 || games.some(g => g.region !== game.region)) && (
+                            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-0.5">
+                              {game.region}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1.5">
+                            <TeamChip
+                              teamId={game.teamAId}
+                              shortName={game.teamAShortName}
+                              seed={game.teamASeed}
+                              logo={game.teamALogo}
+                              wins={game.teamAWins}
+                              isSelected={pickedWinner === game.teamAId}
+                              isEliminated={game.isLocked && !isAWinner}
+                              isLocked={game.isLocked}
+                              onClick={() => pickGame(game.gameId, game.teamAId)}
+                            />
+                            <span className="text-[10px] text-muted-foreground shrink-0">vs</span>
+                            <TeamChip
+                              teamId={game.teamBId}
+                              shortName={game.teamBShortName}
+                              seed={game.teamBSeed}
+                              logo={game.teamBLogo}
+                              wins={game.teamBWins}
+                              isSelected={pickedWinner === game.teamBId}
+                              isEliminated={game.isLocked && !isBWinner}
+                              isLocked={game.isLocked}
+                              onClick={() => pickGame(game.gameId, game.teamBId)}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {allGames.length === 0 && (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              No matchups available. Run an ESPN sync or advance the demo timeline.
+            </p>
+          )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* ── Right: Simulated leaderboard ──────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-primary" />
+            Simulated Leaderboard
+            {hasChanges && (
+              <Badge variant="outline" className="text-xs text-primary border-primary/40">
+                Hypothetical
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">Rank</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="text-right">Score</TableHead>
+                  <TableHead className="text-right">PPR</TableHead>
+                  <TableHead className="text-right">TPS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {simLeaderboard.map((entry) => {
+                  const original = initialLeaderboard.find((e) => e.userId === entry.userId)
+                  const rankChanged = original && original.rank !== entry.rank
+                  return (
+                    <TableRow key={entry.userId}>
+                      <TableCell className="font-bold">
+                        <div className="flex items-center gap-1">
+                          #{entry.rank}
+                          {rankChanged && original && (
+                            <span
+                              className={`text-xs ${
+                                entry.rank < original.rank ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {entry.rank < original.rank ? "▲" : "▼"}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium text-sm truncate max-w-[120px]">
+                        {entry.name}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">{entry.currentScore}</TableCell>
+                      <TableCell className="text-right font-mono text-sm text-muted-foreground">
+                        +{entry.ppr}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-bold text-primary text-sm">
+                        {entry.tps}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

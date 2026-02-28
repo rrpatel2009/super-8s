@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import type { Role } from "@/generated/prisma"
+
+function requireAdmin(role: string) {
+  return role !== "ADMIN" && role !== "SUPERADMIN"
+}
+
+export async function GET() {
+  const session = await auth()
+  if (!session?.user || requireAdmin(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isPaid: true,
+      createdAt: true,
+      _count: { select: { picks: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  })
+
+  return NextResponse.json(users)
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user || requireAdmin(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const { userId, isPaid, role } = await req.json()
+  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 })
+
+  // Fetch target user
+  const target = await prisma.user.findUnique({ where: { id: userId } })
+  if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+  // SUPERADMIN cannot be demoted by anyone
+  if (target.role === "SUPERADMIN" && role !== undefined) {
+    return NextResponse.json({ error: "Cannot change SUPERADMIN role" }, { status: 403 })
+  }
+
+  // Only SUPERADMIN can promote/demote ADMINs
+  if (role !== undefined && session.user.role !== "SUPERADMIN") {
+    return NextResponse.json({ error: "Only SUPERADMIN can change roles" }, { status: 403 })
+  }
+
+  const updateData: { isPaid?: boolean; role?: Role } = {}
+  if (isPaid !== undefined) updateData.isPaid = isPaid
+  if (role !== undefined) updateData.role = role as Role
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: { id: true, name: true, email: true, role: true, isPaid: true },
+  })
+
+  return NextResponse.json(updated)
+}
