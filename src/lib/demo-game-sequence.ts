@@ -54,11 +54,7 @@ const R64_SEED_MATCHUPS = [
   [1, 16], [8, 9], [5, 12], [4, 13], [6, 11], [3, 14], [7, 10], [2, 15],
 ]
 
-/** Cross-region pairings for Final Four (by convention, brackets pair East-West and South-Midwest) */
-const F4_REGION_MATCHUPS: [string, string][] = [
-  ["East", "West"],
-  ["South", "Midwest"],
-]
+const CHRONOLOGICAL_GAMES = [{ "w": "creighton", "l": "louisville", "r": 1 }, { "w": "purdue", "l": "high-point", "r": 1 }, { "w": "wisconsin", "l": "montana", "r": 1 }, { "w": "houston", "l": "siu-edwardsville", "r": 1 }, { "w": "auburn", "l": "alabama-st", "r": 1 }, { "w": "mcneese-st", "l": "clemson", "r": 1 }, { "w": "byu", "l": "vcu", "r": 1 }, { "w": "gonzaga", "l": "georgia", "r": 1 }, { "w": "tennessee", "l": "wofford", "r": 1 }, { "w": "arkansas", "l": "kansas", "r": 1 }, { "w": "texas-am", "l": "yale", "r": 1 }, { "w": "drake", "l": "missouri", "r": 1 }, { "w": "ucla", "l": "utah-st", "r": 1 }, { "w": "st-johns", "l": "omaha", "r": 1 }, { "w": "michigan", "l": "uc-san-diego", "r": 1 }, { "w": "texas-tech", "l": "unc-wilmington", "r": 1 }, { "w": "baylor", "l": "mississippi-st", "r": 1 }, { "w": "alabama", "l": "robert-morris", "r": 1 }, { "w": "iowa-st", "l": "lipscomb", "r": 1 }, { "w": "colorado-st", "l": "memphis", "r": 1 }, { "w": "duke", "l": "mount-st-marys", "r": 1 }, { "w": "saint-marys", "l": "vanderbilt", "r": 1 }, { "w": "ole-miss", "l": "north-carolina", "r": 1 }, { "w": "maryland", "l": "grand-canyon", "r": 1 }, { "w": "florida", "l": "norfolk-st", "r": 1 }, { "w": "kentucky", "l": "troy", "r": 1 }, { "w": "new-mexico", "l": "marquette", "r": 1 }, { "w": "arizona", "l": "akron", "r": 1 }, { "w": "uconn", "l": "oklahoma", "r": 1 }, { "w": "illinois", "l": "xavier", "r": 1 }, { "w": "michigan-st", "l": "bryant", "r": 1 }, { "w": "oregon", "l": "liberty", "r": 1 }, { "w": "purdue", "l": "mcneese-st", "r": 2 }, { "w": "arkansas", "l": "st-johns", "r": 2 }, { "w": "michigan", "l": "texas-am", "r": 2 }, { "w": "texas-tech", "l": "drake", "r": 2 }, { "w": "auburn", "l": "creighton", "r": 2 }, { "w": "byu", "l": "wisconsin", "r": 2 }, { "w": "houston", "l": "gonzaga", "r": 2 }, { "w": "tennessee", "l": "ucla", "r": 2 }, { "w": "florida", "l": "uconn", "r": 2 }, { "w": "duke", "l": "baylor", "r": 2 }, { "w": "kentucky", "l": "illinois", "r": 2 }, { "w": "alabama", "l": "saint-marys", "r": 2 }, { "w": "maryland", "l": "colorado-st", "r": 2 }, { "w": "ole-miss", "l": "iowa-st", "r": 2 }, { "w": "michigan-st", "l": "new-mexico", "r": 2 }, { "w": "arizona", "l": "oregon", "r": 2 }, { "w": "alabama", "l": "byu", "r": 3 }, { "w": "florida", "l": "maryland", "r": 3 }, { "w": "duke", "l": "arizona", "r": 3 }, { "w": "texas-tech", "l": "arkansas", "r": 3 }, { "w": "michigan-st", "l": "ole-miss", "r": 3 }, { "w": "tennessee", "l": "kentucky", "r": 3 }, { "w": "auburn", "l": "michigan", "r": 3 }, { "w": "houston", "l": "purdue", "r": 3 }, { "w": "florida", "l": "texas-tech", "r": 4 }, { "w": "duke", "l": "alabama", "r": 4 }, { "w": "houston", "l": "tennessee", "r": 4 }, { "w": "auburn", "l": "michigan-st", "r": 4 }, { "w": "florida", "l": "auburn", "r": 5 }, { "w": "houston", "l": "duke", "r": 5 }, { "w": "florida", "l": "houston", "r": 6 }];
 
 // ─── Seeded RNG for stable fake scores ───────────────────────────────────────
 
@@ -85,102 +81,26 @@ function fakeScore(rng: () => number, seed: number, winner: boolean): number {
 // ─── Game Sequence Generation ────────────────────────────────────────────────
 
 /**
- * Generates all ~63 tournament games in chronological order from DemoTeam[] data.
- * Walks round transitions (1→6) and pairs winners/losers using bracket structure.
+ * Generates all ~63 tournament games in exactly chronological order.
  */
 export function generateDemoGameSequence(teams: DemoTeam[]): DemoGameEvent[] {
   const teamMap = new Map(teams.map(t => [t.id, t]))
   const games: DemoGameEvent[] = []
-  let gameIndex = 0
 
-  const regions = ["East", "West", "South", "Midwest"]
+  for (let i = 0; i < CHRONOLOGICAL_GAMES.length; i++) {
+    const rawGame = CHRONOLOGICAL_GAMES[i];
+    const winner = teamMap.get(rawGame.w);
+    const loser = teamMap.get(rawGame.l);
 
-  // ── Rounds 1-4: Regional play ──────────────────────────────────────────
+    if (!winner || !loser) continue;
 
-  for (let round = 1; round <= 4; round++) {
-    for (const region of regions) {
-      const regionTeams = teams.filter(t => t.region === region)
+    const region = rawGame.r >= 5 ? (rawGame.r === 5 ? "Final Four" : "Championship") : winner.region;
 
-      // Find teams that were alive entering this round and played
-      const alive = regionTeams.filter(t => !t.elimAtRound[round - 1])
-
-      if (round === 1) {
-        // R64: Use standard bracket seed matchups
-        for (const [seedA, seedB] of R64_SEED_MATCHUPS) {
-          const teamA = alive.find(t => t.seed === seedA)
-          const teamB = alive.find(t => t.seed === seedB)
-          if (!teamA || !teamB) continue
-
-          const game = buildGame(teamA, teamB, round, region, gameIndex)
-          if (game) {
-            games.push(game)
-            gameIndex++
-          }
-        }
-      } else {
-        // R32+: Pair winners based on who advanced (bracket pairing by position)
-        // Within a region, pair teams by their bracket position
-        const winners = alive.filter(t => !t.elimAtRound[round])
-        const losers = alive.filter(t => t.elimAtRound[round] && !t.elimAtRound[round - 1])
-
-        // Match each loser with a winner from the same bracket half
-        const paired = new Set<string>()
-        for (const loser of losers) {
-          // Find the winner this loser most likely played
-          // Bracket logic: in R32, seeds 1,16,8,9 bracket feeds into one slot, etc.
-          const winner = findBracketOpponent(loser, winners, round, paired)
-          if (winner) {
-            paired.add(winner.id)
-            const game = buildGame(winner, loser, round, region, gameIndex)
-            if (game) {
-              games.push(game)
-              gameIndex++
-            }
-          }
-        }
-      }
-    }
+    const game = buildGame(winner, loser, rawGame.r, region, i);
+    if (game) games.push(game);
   }
 
-  // ── Round 5: Final Four (cross-region) ─────────────────────────────────
-
-  for (const [regionA, regionB] of F4_REGION_MATCHUPS) {
-    const teamA = teams.find(t => t.region === regionA && !t.elimAtRound[4])
-    const teamB = teams.find(t => t.region === regionB && !t.elimAtRound[4])
-    if (!teamA || !teamB) continue
-
-    const game = buildGame(
-      teamA.elimAtRound[5] ? teamB : teamA,
-      teamA.elimAtRound[5] ? teamA : teamB,
-      5,
-      "Final Four",
-      gameIndex
-    )
-    if (game) {
-      games.push(game)
-      gameIndex++
-    }
-  }
-
-  // ── Round 6: Championship ──────────────────────────────────────────────
-
-  const finalists = teams.filter(t => !t.elimAtRound[5])
-  if (finalists.length === 2) {
-    const [a, b] = finalists
-    const game = buildGame(
-      a.elimAtRound[6] ? b : (b.elimAtRound[6] ? a : a),
-      a.elimAtRound[6] ? a : (b.elimAtRound[6] ? b : b),
-      6,
-      "Championship",
-      gameIndex
-    )
-    if (game) {
-      games.push(game)
-      gameIndex++
-    }
-  }
-
-  return games
+  return games;
 }
 
 function buildGame(
@@ -212,26 +132,6 @@ function buildGame(
     loserScore: Math.min(lScore, wScore - 1), // ensure winner has higher score
     isUpset: loser.seed < winner.seed,
   }
-}
-
-/**
- * For rounds 2-4, find the bracket opponent for a loser team.
- * Uses bracket position logic: the bracket tree determines which teams can meet.
- */
-function findBracketOpponent(
-  loser: DemoTeam,
-  winners: DemoTeam[],
-  _round: number,
-  paired: Set<string>
-): DemoTeam | undefined {
-  // Heuristic: find the unpaired winner in same region with the most different seed bracket position
-  const unpaired = winners.filter(w => !paired.has(w.id))
-  if (unpaired.length === 1) return unpaired[0]
-
-  // For simplicity and correctness, pair by elimination: the loser who just lost must have
-  // played someone who advanced. The winner advanced = not eliminated at this round.
-  // Just find the closest unpaired winner.
-  return unpaired[0]
 }
 
 // ─── State Computation ───────────────────────────────────────────────────────

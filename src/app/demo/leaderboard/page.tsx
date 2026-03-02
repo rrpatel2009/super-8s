@@ -46,10 +46,11 @@ export default function DemoLeaderboardPage() {
       })
     }
 
-    const aliveTeams = teamsData.filter(t => !t.eliminated && !t.isPlayIn)
-    if (aliveTeams.length === 0) return undefined
+    // Pass ALL non-play-in teams — the algorithm handles alive vs eliminated internally
+    const candidateTeams = teamsData
+    if (candidateTeams.length === 0) return undefined
 
-    const result = computeOptimal8(aliveTeams, teamInfoMap)
+    const result = computeOptimal8(candidateTeams, teamInfoMap)
     if (result.teamIds.length === 0) return undefined
 
     // Build pick summaries for the 8 selected teams

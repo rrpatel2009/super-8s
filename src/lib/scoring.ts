@@ -135,57 +135,36 @@ export interface Optimal8Result {
 }
 
 /**
- * Computes the 8 currently alive teams that would yield the highest bracket-aware TPS.
+ * Computes the 8 teams with the highest current score (seed × wins) at this
+ * moment in the tournament.
  *
- * Algorithm (greedy):
- * 1. Sort alive non-play-in teams by individual PPR (seed × (6-wins)) descending.
- * 2. Pick top 2 per region (8 total). Within each region, prefer teams from different
- *    bracket halves (slots 0-3 vs 4-7) to avoid E8 conflicts.
- * 3. Run bracket-aware PPR on the selected 8 to get the true total.
+ * Algorithm:
+ * 1. For every non-play-in team, compute current score (seed × wins).
+ * 2. Sort ALL teams globally by score desc, seed asc as tiebreaker.
+ * 3. Pick top 8.
+ * 4. Run bracket-aware PPR on the selected 8 to get the display TPS.
  */
 export function computeOptimal8(
   aliveTeams: Optimal8Team[],
   teamInfoMap: Map<string, TeamBracketInfo>
 ): Optimal8Result {
-  const regions = ["East", "West", "South", "Midwest"]
-  const selectedIds: string[] = []
-
-  for (const region of regions) {
-    const regionTeams = aliveTeams
-      .filter(t => t.region === region && !t.isPlayIn)
-      .sort((a, b) => {
-        // Sort by PPR descending (higher seed # × remaining games wins)
-        const pprA = a.seed * Math.max(0, 6 - a.wins)
-        const pprB = b.seed * Math.max(0, 6 - b.wins)
-        return pprB - pprA
-      })
-
-    if (regionTeams.length === 0) continue
-
-    // Prefer one from each bracket half (slots 0-3 = top half, 4-7 = bottom half)
-    const topHalf = regionTeams.filter(t => {
-      const slot = seedToSlot(t.seed)
-      return slot >= 0 && slot <= 3
-    })
-    const bottomHalf = regionTeams.filter(t => {
-      const slot = seedToSlot(t.seed)
-      return slot >= 4 && slot <= 7
+  // Score every non-play-in team by current points earned
+  const scored = aliveTeams
+    .filter(t => !t.isPlayIn)
+    .map(t => {
+      const info = teamInfoMap.get(t.id)
+      const eliminated = info ? info.eliminated : false
+      const wins = info ? info.wins : t.wins
+      const seed = info ? info.seed : t.seed
+      const score = seed * wins
+      const ppr = eliminated ? 0 : seed * Math.max(0, 6 - wins)
+      return { ...t, seed, wins, eliminated, score, ppr }
     })
 
-    const picks: Optimal8Team[] = []
+  // Sort globally: highest current score first, lower seed as tiebreaker
+  scored.sort((a, b) => b.score - a.score || a.seed - b.seed)
 
-    if (topHalf.length > 0 && bottomHalf.length > 0) {
-      // One from each half — minimizes E8 conflict
-      picks.push(topHalf[0], bottomHalf[0])
-    } else if (regionTeams.length >= 2) {
-      // Same half — just take top 2
-      picks.push(regionTeams[0], regionTeams[1])
-    } else {
-      picks.push(regionTeams[0])
-    }
-
-    selectedIds.push(...picks.map(t => t.id))
-  }
+  const selectedIds = scored.slice(0, 8).map(t => t.id)
 
   // Compute bracket-aware PPR for the selection
   const { totalPPR } = computeBracketAwarePPR(selectedIds, teamInfoMap)

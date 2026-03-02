@@ -31,8 +31,12 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { Badge } from "@/components/ui/badge"
-import { Play, Pause } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Play, Pause, Search, Filter, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { computeBracketAwarePPR, type TeamBracketInfo } from "@/lib/bracket-ppr"
 import type { HistorySnapshot } from "@/types"
 import type { RoundBoundary, DemoGameEvent } from "@/lib/demo-game-sequence"
 
@@ -74,18 +78,6 @@ const PALETTE = [
 
 // ─── Trajectory computation ───────────────────────────────────────────────────
 
-/**
- * Computes the "optimal trajectory" for each user's TPS going forward.
- *
- * Starting point: naive TPS = currentScore + Σ seed×(6-wins) for all alive picks,
- * ignoring bracket conflicts (this is always ≥ bracket-aware TPS).
- *
- * Walking future games: TPS only changes when two of a user's picks are in the
- * same game (conflict). The pick with lower remaining PPR is "eliminated" and
- * their potential is subtracted. Single-pick games are score-neutral (TPS stays flat).
- *
- * The trajectory ends at the bracket-aware TPS at the final game.
- */
 function computeOptimalTrajectories(
   history: HistorySnapshot[],
   gameIndex: number,
@@ -102,55 +94,56 @@ function computeOptimalTrajectories(
 
   for (const entry of anchorSnapshot.entries) {
     const uid = entry.userId
+    const trajectory: (number | null)[] = new Array(totalGames).fill(null)
 
-    // Build alive picks map: teamId → seed (skip play-in and eliminated picks)
-    const alivePicks = new Map<string, number>()
-    let naiveTps = entry.currentScore
-
+    // 1. Compute optimal future wins using bracket-aware PPR engine
+    const teamInfoMap = new Map<string, TeamBracketInfo>()
     for (const pick of entry.picks) {
-      if (!pick.eliminated && !pick.isPlayIn && pick.seed > 0) {
-        alivePicks.set(pick.teamId, pick.seed)
-        naiveTps += pick.seed * Math.max(0, 6 - pick.wins)
+      if (!pick.isPlayIn) {
+        teamInfoMap.set(pick.teamId, {
+          seed: pick.seed,
+          region: pick.region || "",
+          wins: pick.wins,
+          eliminated: pick.eliminated
+        })
       }
     }
 
-    const trajectory: (number | null)[] = new Array(totalGames).fill(null)
-    let currentNaiveTps = naiveTps
+    const { perTeam } = computeBracketAwarePPR(entry.picks.map(p => p.teamId), teamInfoMap)
 
-    // Set starting value at the current game position
-    if (gameIndex < totalGames) {
-      trajectory[gameIndex] = currentNaiveTps
+    // Map of Round -> Array of points to add
+    const pointsByRound = new Map<number, number[]>()
+    for (const pick of entry.picks) {
+      if (pick.eliminated || pick.isPlayIn || pick.seed === 0) continue
+      const ppr = perTeam.get(pick.teamId) || 0
+      const additionalWins = ppr / pick.seed
+      for (let r = pick.wins + 1; r <= pick.wins + additionalWins; r++) {
+        const pts = pointsByRound.get(r) || []
+        pts.push(pick.seed)
+        pointsByRound.set(r, pts)
+      }
     }
 
-    // Walk future games: only conflict events change the trajectory
+    let currentScore = entry.currentScore
+    if (gameIndex < totalGames) {
+      trajectory[gameIndex] = currentScore
+    }
+
+    const assignedByRound = new Map<number, number>()
+
     for (let i = gameIndex + 1; i < totalGames; i++) {
       const game = gameSequence[i]
-      if (!game) {
-        trajectory[i] = currentNaiveTps
-        continue
-      }
+      if (game) {
+        const round = game.round
+        const pts = pointsByRound.get(round) || []
+        const assignedIdx = assignedByRound.get(round) || 0
 
-      const winnerInPicks = alivePicks.has(game.winnerId)
-      const loserInPicks = alivePicks.has(game.loserId)
-
-      if (winnerInPicks && loserInPicks) {
-        // CONFLICT: both of this user's picks meet in this game.
-        // Keep the one with higher remaining PPR (seed × remaining rounds).
-        // Before round r, remaining games = 7 - r (including this round).
-        // Higher seed NUMBER = higher PPR contribution in this contest.
-        if (game.winnerSeed < game.loserSeed) {
-          // Winner has lower seed# (better team) → lower PPR contribution → eliminate winner pick
-          currentNaiveTps -= game.winnerSeed * (7 - game.round)
-          alivePicks.delete(game.winnerId)
-        } else {
-          // Loser has lower or equal seed# → lower PPR contribution → eliminate loser pick
-          currentNaiveTps -= game.loserSeed * (7 - game.round)
-          alivePicks.delete(game.loserId)
+        if (assignedIdx < pts.length) {
+          currentScore += pts[assignedIdx]
+          assignedByRound.set(round, assignedIdx + 1)
         }
       }
-      // Single-pick or no-pick games: TPS is score-neutral (pick wins → +seed score, -seed PPR)
-
-      trajectory[i] = currentNaiveTps
+      trajectory[i] = currentScore
     }
 
     result[uid] = trajectory
@@ -172,18 +165,73 @@ export function LeaderboardHistoryChart({
 }: LeaderboardHistoryChartProps) {
   const [chartCursor, setChartCursor] = useState(gameIndex)
   const [isDragging, setIsDragging] = useState(false)
-  const [yAxisMode, setYAxisMode] = useState<"tps" | "score">("tps")
   const [animateIndex, setAnimateIndex] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
   const chartRef = useRef<HTMLDivElement>(null)
   const animIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Keep chartCursor ≤ gameIndex (for tooltip exploration)
   const clampedCursor = Math.min(Math.max(chartCursor, 0), gameIndex)
 
-  // Extract all unique userIds from the first snapshot
+  // Extract all unique userIds from the first snapshot (or last if first is empty)
   const userIds = history.length > 0
     ? history[0].entries.map(e => e.userId)
     : []
+
+  // Initialize hidden users to anyone not in the top 64 of the current/last snapshot
+  // We use useState with a function initializer to only do this once per mount/history change.
+  // We'll re-calculate if the userIds list fundamentally changes.
+  const [hiddenUserIds, setHiddenUserIds] = useState<Set<string>>(() => {
+    // Find the most relevant snapshot (the current one or the last one available)
+    const anchorSnapIndex = Math.min(Math.max(0, gameIndex), history.length - 1)
+    const anchorSnap = history[anchorSnapIndex]
+
+    if (!anchorSnap) return new Set<string>()
+
+    // Sort entries by rank/score taking the top 64
+    // (They should already be sorted by rank in the snapshot computation)
+    const top64Ids = new Set(anchorSnap.entries.slice(0, 64).map(e => e.userId))
+
+    // Hide everyone not in the top 64
+    const initialHidden = new Set<string>()
+    for (const entry of anchorSnap.entries) {
+      if (!top64Ids.has(entry.userId)) {
+        initialHidden.add(entry.userId)
+      }
+    }
+    return initialHidden
+  })
+
+  // Re-run the top-64 selection if the total participants changes (e.g. changing user sets)
+  useEffect(() => {
+    const anchorSnapIndex = Math.min(Math.max(0, gameIndex), history.length - 1)
+    const anchorSnap = history[anchorSnapIndex]
+    if (!anchorSnap) return
+
+    const top64Ids = new Set(anchorSnap.entries.slice(0, 64).map(e => e.userId))
+    const initialHidden = new Set<string>()
+    for (const entry of anchorSnap.entries) {
+      if (!top64Ids.has(entry.userId)) {
+        initialHidden.add(entry.userId)
+      }
+    }
+    setHiddenUserIds(initialHidden)
+  }, [history]) // Dependency on history means it changes when the user set changes
+
+  // Filter userIds for chart lines based on explicit toggles
+  const chartVisibleUserIds = useMemo(() => {
+    return userIds.filter(uid => !hiddenUserIds.has(uid))
+  }, [userIds, hiddenUserIds])
+
+  // Filter userIds inside the dropdown menu based on search query
+  const dropdownFilteredUserIds = useMemo(() => {
+    if (!searchQuery.trim()) return userIds
+    const lowerQ = searchQuery.toLowerCase()
+    return userIds.filter(uid => {
+      const name = userNames[uid] ?? uid
+      return name.toLowerCase().includes(lowerQ)
+    })
+  }, [searchQuery, userIds, userNames])
 
   // Build flat chart data — one point per game
   const chartData = history.map((snap, i) => {
@@ -221,24 +269,18 @@ export function LeaderboardHistoryChart({
 
   const yAxisMax = useMemo(() => {
     if (!anchorSnapshot) return 100
-    if (yAxisMode === "score") {
-      const maxScore = Math.max(...anchorSnapshot.entries.map(e => e.currentScore), 1)
-      return Math.ceil(maxScore * 1.1)
-    } else {
-      // TPS mode: use max naive TPS across all users (trajectory start value)
-      let maxVal = 1
-      for (const entry of anchorSnapshot.entries) {
-        const traj = trajectories[entry.userId]
-        if (traj && gameIndex >= 0 && gameIndex < traj.length && traj[gameIndex] !== null) {
-          maxVal = Math.max(maxVal, traj[gameIndex] as number)
-        } else {
-          // Fall back to bracket-aware TPS if no trajectory
-          maxVal = Math.max(maxVal, entry.tps)
-        }
+    // Max hypothetical score across ALL users at the end of trajectory to keep limits stable
+    let maxVal = 1
+    for (const entry of anchorSnapshot.entries) {
+      const traj = trajectories[entry.userId]
+      if (traj && gameIndex >= 0 && traj[totalGames - 1] !== null) {
+        maxVal = Math.max(maxVal, traj[totalGames - 1] as number)
+      } else {
+        maxVal = Math.max(maxVal, entry.tps)
       }
-      return Math.ceil(maxVal * 1.1)
     }
-  }, [anchorSnapshot, yAxisMode, trajectories, gameIndex])
+    return Math.ceil(maxVal * 1.1)
+  }, [anchorSnapshot, trajectories, gameIndex, totalGames])
 
   // ── Play/pause animation ───────────────────────────────────────────────────
   const stopAnimation = useCallback(() => {
@@ -331,28 +373,28 @@ export function LeaderboardHistoryChart({
         </p>
         {!isProjZone && scoreEntries.length > 0
           ? [...scoreEntries]
-              .sort((a, b) => b.value - a.value)
-              .map(p => {
-                const uid = p.dataKey.replace("_score", "")
-                return (
-                  <div key={uid} className="flex justify-between gap-3">
-                    <span style={{ color: p.color }}>{userNames[uid] ?? uid}</span>
-                    <span className="font-mono font-bold">{p.value}</span>
-                  </div>
-                )
-              })
+            .sort((a, b) => b.value - a.value)
+            .map(p => {
+              const uid = p.dataKey.replace("_score", "")
+              return (
+                <div key={uid} className="flex justify-between gap-3">
+                  <span style={{ color: p.color }}>{userNames[uid] ?? uid}</span>
+                  <span className="font-mono font-bold">{p.value}</span>
+                </div>
+              )
+            })
           : [...trajEntries]
-              .filter(p => p.value !== null && p.value !== undefined)
-              .sort((a, b) => b.value - a.value)
-              .map(p => {
-                const uid = p.dataKey.replace("_traj", "")
-                return (
-                  <div key={uid} className="flex justify-between gap-3">
-                    <span style={{ color: p.color }}>{userNames[uid] ?? uid}</span>
-                    <span className="font-mono font-bold text-muted-foreground">{Math.round(p.value)}</span>
-                  </div>
-                )
-              })
+            .filter(p => p.value !== null && p.value !== undefined)
+            .sort((a, b) => b.value - a.value)
+            .map(p => {
+              const uid = p.dataKey.replace("_traj", "")
+              return (
+                <div key={uid} className="flex justify-between gap-3">
+                  <span style={{ color: p.color }}>{userNames[uid] ?? uid}</span>
+                  <span className="font-mono font-bold text-muted-foreground">{Math.round(p.value)}</span>
+                </div>
+              )
+            })
         }
       </div>
     )
@@ -376,32 +418,75 @@ export function LeaderboardHistoryChart({
             <span className="text-muted-foreground/60"> · Drag to explore</span>
           )}
         </p>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Y-axis mode toggle */}
-          <div className="flex rounded border border-border/40 overflow-hidden text-[10px]">
-            <button
-              className={cn(
-                "px-2 py-1 transition-colors",
-                yAxisMode === "tps"
-                  ? "bg-primary/20 text-primary font-semibold"
-                  : "text-muted-foreground hover:bg-muted/40"
-              )}
-              onClick={() => setYAxisMode("tps")}
-            >
-              Max TPS
-            </button>
-            <button
-              className={cn(
-                "px-2 py-1 transition-colors border-l border-border/40",
-                yAxisMode === "score"
-                  ? "bg-primary/20 text-primary font-semibold"
-                  : "text-muted-foreground hover:bg-muted/40"
-              )}
-              onClick={() => setYAxisMode("score")}
-            >
-              Max Score
-            </button>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs px-2.5 bg-background shadow-sm border-border/50">
+                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                Players
+                {hiddenUserIds.size > 0 && (
+                  <Badge variant="secondary" className="px-1 text-[9px] rounded h-4 ml-1 flex items-center bg-muted/80">
+                    {userIds.length - hiddenUserIds.size}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-0" align="end">
+              <div className="p-2 border-b border-border/30 bg-muted/10">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Find player..."
+                    className="h-8 pl-8 text-xs bg-background/50 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/20 shadow-none"
+                  />
+                </div>
+              </div>
+              <div className="max-h-[240px] overflow-y-auto p-1 py-1.5 flex flex-col gap-0.5">
+                <div className="px-2 py-1 flex justify-between items-center text-[10px] font-medium text-muted-foreground border-b border-border/20 mb-1">
+                  <span className="uppercase tracking-wider">Show:</span>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setHiddenUserIds(new Set())} className="hover:text-foreground hover:underline transition-all">All</button>
+                    <button onClick={() => setHiddenUserIds(new Set(userIds))} className="hover:text-foreground hover:underline transition-all">None</button>
+                  </div>
+                </div>
+                {dropdownFilteredUserIds.length === 0 && (
+                  <p className="p-4 text-center text-xs text-muted-foreground">No players found.</p>
+                )}
+                {dropdownFilteredUserIds.map((uid) => {
+                  const isVisible = !hiddenUserIds.has(uid)
+                  const toggle = () => {
+                    const next = new Set(hiddenUserIds)
+                    if (isVisible) next.add(uid)
+                    else next.delete(uid)
+                    setHiddenUserIds(next)
+                  }
+                  return (
+                    <button
+                      key={uid}
+                      onClick={toggle}
+                      className="flex items-center gap-2.5 w-full px-2 py-1.5 text-xs hover:bg-muted/50 rounded-md text-left transition-colors group"
+                    >
+                      <div className={cn(
+                        "w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors duration-150",
+                        isVisible
+                          ? "bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/20"
+                          : "border-border/60 bg-muted/10 group-hover:bg-muted/30 group-hover:border-border"
+                      )}>
+                        {isVisible && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </div>
+                      <div
+                        className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm border border-black/10 dark:border-white/10"
+                        style={{ backgroundColor: colorMap[uid] }}
+                      />
+                      <span className="truncate">{userNames[uid] ?? uid}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
           {/* Play/pause button */}
           {gameIndex > 0 && (
             <button
@@ -497,7 +582,7 @@ export function LeaderboardHistoryChart({
             {/* Animation playhead (when animating, show where we are) */}
             {animateIndex !== null && animateIndex !== gameIndex && (
               <ReferenceLine
-                x={animateIndex}
+                x={animateIndex ?? undefined}
                 stroke="#a78bfa"
                 strokeWidth={1.5}
                 strokeDasharray="4 2"
@@ -515,7 +600,7 @@ export function LeaderboardHistoryChart({
             )}
 
             {/* Solid score lines — visible from 0 → effectiveIndex */}
-            {userIds.map(uid => {
+            {chartVisibleUserIds.map(uid => {
               const isHighlighted = uid === highlightUserId
               const color = colorMap[uid]
               const scoreKey = `${uid}_score`
@@ -542,7 +627,7 @@ export function LeaderboardHistoryChart({
 
             {/* Dashed optimal trajectory lines — from gameIndex onward */}
             {/* Only shown when we have trajectory data (gameSequence provided) */}
-            {gameIndex >= 0 && userIds.map(uid => {
+            {gameIndex >= 0 && chartVisibleUserIds.map(uid => {
               const isHighlighted = uid === highlightUserId
               const color = colorMap[uid]
               const trajKey = `${uid}_traj`
@@ -552,14 +637,14 @@ export function LeaderboardHistoryChart({
               return (
                 <Line
                   key={`traj-${uid}`}
-                  type="monotone"
+                  type="stepAfter"
                   dataKey={trajKey}
                   stroke={color}
-                  strokeWidth={isHighlighted ? 2 : 0.8}
-                  strokeOpacity={isHighlighted ? 0.7 : 0.25}
-                  strokeDasharray="6 3"
+                  strokeWidth={isHighlighted ? 2.5 : 1.5}
+                  strokeDasharray="4 4"
+                  opacity={isHighlighted ? 0.8 : animateIndex !== null ? 0.15 : 0.3}
                   dot={false}
-                  connectNulls
+                  activeDot={false}
                   name={`traj-${uid}`}
                   legendType="none"
                   data={chartData.map((d, i) => {
@@ -573,7 +658,7 @@ export function LeaderboardHistoryChart({
             })}
 
             {/* Fallback flat lines when no gameSequence provided */}
-            {gameIndex >= 0 && !gameSequence.length && userIds.map(uid => {
+            {gameIndex >= 0 && !gameSequence.length && chartVisibleUserIds.map(uid => {
               const isHighlighted = uid === highlightUserId
               const color = colorMap[uid]
               const trajKey = `${uid}_traj`
@@ -607,7 +692,7 @@ export function LeaderboardHistoryChart({
 
       {/* Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 px-1">
-        {userIds.map(uid => (
+        {chartVisibleUserIds.map(uid => (
           <div key={uid} className="flex items-center gap-1.5">
             <div
               className="h-2 w-5 rounded-full"
@@ -634,6 +719,6 @@ export function LeaderboardHistoryChart({
           <span className="text-xs text-muted-foreground">Optimal trajectory</span>
         </div>
       </div>
-    </div>
+    </div >
   )
 }

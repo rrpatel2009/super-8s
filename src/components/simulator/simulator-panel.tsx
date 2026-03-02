@@ -193,15 +193,14 @@ function TeamChip({
 }) {
   return (
     <button
-      className={`flex-1 flex items-center gap-1.5 p-2 rounded-lg border text-left transition-all text-xs min-w-0 ${
-        isLocked
+      className={`flex-1 flex items-center gap-1.5 p-2 rounded-lg border text-left transition-all text-xs min-w-0 ${isLocked
           ? isEliminated
             ? "border-border/30 bg-muted/10 opacity-40 cursor-default"
             : "border-primary/30 bg-primary/5 cursor-default"
           : isSelected
-          ? "border-primary bg-primary/15 shadow-sm"
-          : "border-border/60 bg-card hover:border-border hover:bg-muted/30 cursor-pointer"
-      }`}
+            ? "border-primary bg-primary/15 shadow-sm"
+            : "border-border/60 bg-card hover:border-border hover:bg-muted/30 cursor-pointer"
+        }`}
       onClick={isLocked ? undefined : onClick}
       disabled={isLocked}
       type="button"
@@ -396,102 +395,101 @@ export function SimulatorPanel({
 
             {/* Existing list/accordion view */}
             <TabsContent value="list" className="mt-0 space-y-2">
-          {roundGroups.map(([round, games]) => {
-            const allLocked = games.every(g => g.isLocked)
-            const isCollapsed = collapsedRounds.has(round)
-            const label = ROUND_LABELS[round] ?? `Round ${round}`
-            const picked = games.filter(g => !g.isLocked && gamePicks[g.gameId]).length
-            const future = games.filter(g => !g.isLocked).length
+              {roundGroups.map(([round, games]) => {
+                const allLocked = games.every(g => g.isLocked)
+                const isCollapsed = collapsedRounds.has(round)
+                const label = ROUND_LABELS[round] ?? `Round ${round}`
+                const picked = games.filter(g => !g.isLocked && gamePicks[g.gameId]).length
+                const future = games.filter(g => !g.isLocked).length
 
-            return (
-              <div key={round} className="rounded-lg border border-border/50 overflow-hidden">
-                {/* Round header */}
-                <button
-                  className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors ${
-                    allLocked
-                      ? "bg-muted/30 hover:bg-muted/50"
-                      : "bg-muted/10 hover:bg-muted/20"
-                  }`}
-                  onClick={() => toggleRound(round)}
-                >
-                  <div className="flex items-center gap-2">
-                    {isCollapsed
-                      ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                    }
-                    <span className={`text-sm font-semibold ${allLocked ? "text-muted-foreground" : ""}`}>
-                      {label}
-                    </span>
-                    {allLocked && (
-                      <Lock className="h-3 w-3 text-muted-foreground/50" />
+                return (
+                  <div key={round} className="rounded-lg border border-border/50 overflow-hidden">
+                    {/* Round header */}
+                    <button
+                      className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors ${allLocked
+                          ? "bg-muted/30 hover:bg-muted/50"
+                          : "bg-muted/10 hover:bg-muted/20"
+                        }`}
+                      onClick={() => toggleRound(round)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {isCollapsed
+                          ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                          : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                        }
+                        <span className={`text-sm font-semibold ${allLocked ? "text-muted-foreground" : ""}`}>
+                          {label}
+                        </span>
+                        {allLocked && (
+                          <Lock className="h-3 w-3 text-muted-foreground/50" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {allLocked ? (
+                          <span className="text-[10px] text-muted-foreground">{games.length} games</span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">
+                            {picked}/{future} picked
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Games list */}
+                    {!isCollapsed && (
+                      <div className="px-3 py-2 space-y-1.5 bg-background/30">
+                        {games.map(game => {
+                          const pickedWinner = gamePicks[game.gameId]
+                          const isAWinner = game.actualWinnerId === game.teamAId
+                          const isBWinner = game.actualWinnerId === game.teamBId
+
+                          return (
+                            <div key={game.gameId} className="space-y-0.5">
+                              {/* Region/context label for multi-region rounds */}
+                              {(round >= 5 || games.some(g => g.region !== game.region)) && (
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-0.5">
+                                  {game.region}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-1.5">
+                                <TeamChip
+                                  teamId={game.teamAId}
+                                  shortName={game.teamAShortName}
+                                  seed={game.teamASeed}
+                                  logo={game.teamALogo}
+                                  wins={game.teamAWins}
+                                  isSelected={pickedWinner === game.teamAId}
+                                  isEliminated={game.isLocked && !isAWinner}
+                                  isLocked={game.isLocked}
+                                  onClick={() => pickGame(game.gameId, game.teamAId)}
+                                />
+                                <span className="text-[10px] text-muted-foreground shrink-0">vs</span>
+                                <TeamChip
+                                  teamId={game.teamBId}
+                                  shortName={game.teamBShortName}
+                                  seed={game.teamBSeed}
+                                  logo={game.teamBLogo}
+                                  wins={game.teamBWins}
+                                  isSelected={pickedWinner === game.teamBId}
+                                  isEliminated={game.isLocked && !isBWinner}
+                                  isLocked={game.isLocked}
+                                  onClick={() => pickGame(game.gameId, game.teamBId)}
+                                />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    {allLocked ? (
-                      <span className="text-[10px] text-muted-foreground">{games.length} games</span>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">
-                        {picked}/{future} picked
-                      </span>
-                    )}
-                  </div>
-                </button>
+                )
+              })}
 
-                {/* Games list */}
-                {!isCollapsed && (
-                  <div className="px-3 py-2 space-y-1.5 bg-background/30">
-                    {games.map(game => {
-                      const pickedWinner = gamePicks[game.gameId]
-                      const isAWinner = game.actualWinnerId === game.teamAId
-                      const isBWinner = game.actualWinnerId === game.teamBId
-
-                      return (
-                        <div key={game.gameId} className="space-y-0.5">
-                          {/* Region/context label for multi-region rounds */}
-                          {(round >= 5 || games.some(g => g.region !== game.region)) && (
-                            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-0.5">
-                              {game.region}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-1.5">
-                            <TeamChip
-                              teamId={game.teamAId}
-                              shortName={game.teamAShortName}
-                              seed={game.teamASeed}
-                              logo={game.teamALogo}
-                              wins={game.teamAWins}
-                              isSelected={pickedWinner === game.teamAId}
-                              isEliminated={game.isLocked && !isAWinner}
-                              isLocked={game.isLocked}
-                              onClick={() => pickGame(game.gameId, game.teamAId)}
-                            />
-                            <span className="text-[10px] text-muted-foreground shrink-0">vs</span>
-                            <TeamChip
-                              teamId={game.teamBId}
-                              shortName={game.teamBShortName}
-                              seed={game.teamBSeed}
-                              logo={game.teamBLogo}
-                              wins={game.teamBWins}
-                              isSelected={pickedWinner === game.teamBId}
-                              isEliminated={game.isLocked && !isBWinner}
-                              isLocked={game.isLocked}
-                              onClick={() => pickGame(game.gameId, game.teamBId)}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-
-          {allGames.length === 0 && (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No matchups available. Run an ESPN sync or advance the demo timeline.
-            </p>
-          )}
+              {allGames.length === 0 && (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No matchups available. Run an ESPN sync or advance the demo timeline.
+                </p>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -533,9 +531,8 @@ export function SimulatorPanel({
                           #{entry.rank}
                           {rankChanged && original && (
                             <span
-                              className={`text-xs ${
-                                entry.rank < original.rank ? "text-green-500" : "text-red-500"
-                              }`}
+                              className={`text-xs ${entry.rank < original.rank ? "text-green-500" : "text-red-500"
+                                }`}
                             >
                               {entry.rank < original.rank ? "▲" : "▼"}
                             </span>

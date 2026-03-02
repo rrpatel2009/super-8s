@@ -98,7 +98,8 @@ src/
       leaderboard/    # demo leaderboard + score history chart
       picks/          # demo picks form with auto-pick strategies
       scores/         # demo scores grid
-      simulator/      # demo scenario simulator
+      simulator/      # demo scenario simulator with docked leaderboard
+      bracket/        # full 64-team tournament bracket visualization
       admin/          # demo admin panel (users, settings, sync)
         users/
         settings/
@@ -118,19 +119,21 @@ src/
     picks/            # picks-form, team-card, play-in-slot, quick-pick-generator, bracket-view, picks-tracker
     leaderboard/      # leaderboard-table, leaderboard-history-chart
     scores/           # scores-grid
-    simulator/        # simulator-panel
+    simulator/        # simulator-panel (with docked leaderboard sidebar)
+    bracket/          # advancing-bracket (dual picks+simulator mode), tournament-bracket (read-only)
     layout/           # navbar
   lib/
     auth.ts           # NextAuth full config (Prisma adapter + Resend + events)
     auth.config.ts    # Edge-safe auth config (no Prisma — used by middleware)
     espn.ts           # ESPN API fetch, transform, and full sync logic
-    scoring.ts        # ALL scoring logic lives here
+    scoring.ts        # ALL scoring logic lives here (includes Optimal 8)
     prisma.ts         # Prisma client singleton with Neon adapter
-    demo-data.ts      # 2025 NCAA team data (winsAtRound/elimAtRound) + 12 demo users
+    demo-data.ts      # Real 2025 NCAA team data (winsAtRound/elimAtRound) + 12 demo users with actual picks
     demo-game-sequence.ts  # Game-by-game engine: derives ~63 games, computes state
     demo-context.tsx  # DemoProvider React context — all demo state + computed data
     bracket-ppr.ts    # Bracket-aware PPR algorithm (resolves bracket conflicts)
     tournament-data.ts     # Tournament year registry (add future years here)
+    demo-users-2025.ts     # Real 2025 participant picks (REAL_2025_USERS export)
     utils.ts          # cn() clsx/tailwind-merge utility
   types/index.ts      # shared TypeScript types + NextAuth module augmentation
   generated/prisma/   # Prisma-generated client (do not edit — run prisma generate)
@@ -171,13 +174,17 @@ All scoring logic is in `src/lib/scoring.ts`.
 Score per team:   seed × wins
 PPR (Potential):  seed × max(0, 6 − wins)  — 0 if eliminated
 TPS (Projected):  currentScore + PPR
+Optimal 8:        best possible score achievable by any 8-team combination at the current
+                  game state (greedy: pick teams with highest remaining seed × possible wins,
+                  tie-break by TPS desc)
 ```
 
 - **6 wins** = full run from Round of 64 to Championship.
 - **Round 0 (play-in) wins don't count** toward score — only rounds 1–6.
 - **Bracket-aware PPR** (demo mode): `bracket-ppr.ts` resolves bracket conflicts — two picked teams that share a bracket path can't both win all remaining games. The algorithm caps each team's max reachable round at the earliest conflict point. Used in demo leaderboard, chart projections, and picks tracker.
+- **Optimal 8**: theoretical ceiling — the highest score any 8-team entry could have at any point in the timeline. Shown as a dashed reference line on the leaderboard history chart. Never decreases as the tournament progresses.
 - **Play-in picks**: resolve to the team that wins the play-in game. Until resolved, the slot shows both team names and contributes 0 to scoring.
-- **Leaderboard sort**: TPS desc → currentScore desc → name asc.
+- **Leaderboard sort**: Points desc → TPS desc → name asc.
 - **Top 4** on the leaderboard display their charity preference.
 - **Simulator**: applies hypothetical win/elimination overrides client-side — no DB writes.
 
@@ -214,18 +221,23 @@ DemoProvider (src/lib/demo-context.tsx)
 
 | File | Role |
 |---|---|
-| `src/lib/demo-data.ts` | 64 real 2025 teams (`winsAtRound[]`, `elimAtRound[]`) + 12 demo users |
+| `src/lib/demo-data.ts` | Real 2025 NCAA team data (`winsAtRound[]`, `elimAtRound[]`) + 12 demo users with actual picks |
+| `src/lib/demo-users-2025.ts` | `REAL_2025_USERS` export — actual participant picks for the 2025 tournament |
 | `src/lib/demo-game-sequence.ts` | Derives ~63 individual games from round-level data; computes state at any game index |
-| `src/lib/demo-context.tsx` | `DemoProvider` — all timeline state, computed shapes, fake session |
+| `src/lib/demo-context.tsx` | `DemoProvider` — all timeline state, computed shapes, fake session, Optimal 8 series |
 | `src/lib/tournament-data.ts` | Year registry; add future years here as new `demo-data-YYYY.ts` modules |
 | `src/app/demo/layout.tsx` | Wraps all demo pages in `DemoProvider` + `DemoControlPanel` + `DemoNavbar` |
+| `src/app/demo/bracket/page.tsx` | Full 64-team bracket page using `TournamentBracket` component |
 | `src/components/demo/demo-control-panel.tsx` | Fixed bottom bar: year selector, persona picker, scrubber, play/pause, speed |
 | `src/components/demo/demo-navbar.tsx` | Pulls fake session from context → renders real `Navbar` with `demoMode` + `linkPrefix="/demo"` |
 | `src/lib/bracket-ppr.ts` | Bracket-aware PPR algorithm — resolves bracket conflicts for accurate TPS |
 | `src/components/picks/quick-pick-generator.tsx` | Auto-pick dialog: Chalk / Balanced / Cinderella / Random strategies |
 | `src/components/picks/bracket-view.tsx` | Interactive NCAA bracket visualization with zoom + conflict warnings |
 | `src/components/picks/picks-tracker.tsx` | 2x2 region grid tracker with seed-tier dots + bracket-aware TPS |
-| `src/components/leaderboard/leaderboard-history-chart.tsx` | Recharts line chart: solid score lines + dashed TPS projections (unified view) |
+| `src/components/bracket/advancing-bracket.tsx` | Dual-mode bracket: `picks` (team selection) + `simulator` (cascade game picks) |
+| `src/components/bracket/tournament-bracket.tsx` | Read-only 64-team bracket visualization used on `/demo/bracket` |
+| `src/components/leaderboard/leaderboard-history-chart.tsx` | Recharts line chart: solid score lines + dashed TPS projections + Optimal 8 reference line |
+| `src/components/simulator/simulator-panel.tsx` | Bracket-driven scenario picker with docked leaderboard sidebar |
 
 ### Game-by-Game Engine (`demo-game-sequence.ts`)
 
@@ -243,12 +255,13 @@ DemoProvider (src/lib/demo-context.tsx)
 - **Unified view** — no Score/TPS toggle. Solid lines = actual scores, dashed lines = projected TPS on the same graph.
 - **Auto-shows data** up to current `gameIndex`. Solid lines always render from 0 → `gameIndex` automatically as timeline advances.
 - **Dashed TPS projections** from `gameIndex` → end. Seamlessly connect to solid lines at the current position (start from current score at `gameIndex`).
+- **Optimal 8 line**: distinct dashed gray reference line showing the theoretical best possible score. Computed in `DemoProvider` and passed via `leaderboardHistory`. Labeled in the chart legend.
 - **Timeline position marker**: solid orange `ReferenceLine` at `x={gameIndex}` with ▼ indicator.
 - **Draggable cursor**: mouse drag sets `chartCursor` for tooltip exploration only — does NOT mask solid line data.
 - **Bracket-aware TPS**: projection lines use bracket-aware PPR values (from `bracket-ppr.ts`), accounting for bracket conflicts.
 - Round boundaries shown as subtle vertical dashed reference lines.
 - Current persona's line highlighted (2.5px, full opacity vs 1px, 55% for others).
-- Legend with user color swatches + "Projected TPS" dashed indicator.
+- Legend with user color swatches + "Projected TPS" dashed indicator + "Optimal 8" dashed gray swatch.
 
 ### Quick-Pick Strategies (`quick-pick-generator.tsx`)
 
@@ -312,6 +325,35 @@ Consistent color scheme used across bracket-view, picks-tracker, team-card, and 
 
 Team cards (`team-card.tsx`) use tier colors on the seed badge when not selected.
 
+### Tournament Bracket Page (`/demo/bracket`)
+
+- Uses `TournamentBracket` component to render all 64 teams across 4 regions and 6 rounds.
+- Updates automatically as the demo timeline advances — teams are colored/faded based on current `teamState` (eliminated vs alive).
+- Winners of each game shown connected by SVG connector lines.
+- Accessible from the Demo Navbar under the "Bracket" link.
+
+### Simulator with Docked Leaderboard (`simulator-panel.tsx`)
+
+- The simulator now uses `AdvancingBracket` in `mode="simulator"` for game selection.
+- **Cascade logic**: picking a winner in an earlier game automatically cascades that team into subsequent rounds as the expected participant (shown as TBD if no pick yet).
+- **Docked leaderboard sidebar**: the right side of the page shows a live-updating leaderboard sorted by simulated score (Points desc, TPS desc). Updates on every game pick change.
+
+### Advancing Bracket — Dual Mode (`advancing-bracket.tsx`)
+
+Single component serving two contexts:
+
+| Mode | Props Used | Behavior |
+|------|-----------|----------|
+| `picks` | `selectedTeamIds`, `onToggleTeam`, `disabled` | Pre-tournament team selection; highlights picked teams |
+| `simulator` | `gamePicks`, `onPickGame`, `gameIndex` | Click matchups to pick winners; cascades forward through bracket |
+
+**Cascade algorithm** (simulator mode):
+1. For each game, derive participants from prior game results in the same bracket subtree.
+2. If a prior game is locked (past `gameIndex`), the actual winner feeds forward.
+3. If a prior game is unlocked and the user picked a winner, that pick feeds forward as the expected participant.
+4. If no pick exists, the next round slot shows "TBD".
+5. This cascades from R64 all the way to the Championship.
+
 ### Bracket-Aware PPR (`bracket-ppr.ts`)
 
 The naive PPR formula (`seed × (6 - wins)`) ignores bracket conflicts — two picked teams in the same region can't both win all remaining games. The bracket-aware algorithm resolves this:
@@ -341,11 +383,19 @@ The naive PPR formula (`seed × (6 - wins)`) ignores bracket conflicts — two p
 - **Play/pause**: auto-advances at 0.5×/1×/2×/4× speed.
 - **Picks hint**: when on `/demo/picks` with `gameIndex >= 0`, shows "Set timeline to Pre-Tournament to test picks".
 
+### Demo Data: Real 2025 Participants
+
+`src/lib/demo-users-2025.ts` contains `REAL_2025_USERS` — the actual picks submitted by the 2025 Super 8s participants. `demo-data.ts` imports this and uses it as the `users` array. This makes the demo accurately reflect real player strategies and results.
+
+- To swap in new participant data, update `demo-users-2025.ts` and ensure all pick team IDs match the team IDs in `demo-data.ts`.
+- The demo users array in `demo-data.ts` must stay in sync with the picks (all `picks[]` values must be valid team IDs).
+
 ### Updating for Future Tournaments
 
 1. Create `src/lib/demo-data-YYYY.ts` with `DemoTeam[]` and `DemoUser[]` for the new year.
-2. Register it in `src/lib/tournament-data.ts` (`AVAILABLE_YEARS` array + `getTournamentData` switch).
-3. The rest of the engine picks it up automatically.
+2. Create `src/lib/demo-users-YYYY.ts` with `REAL_YYYY_USERS` for real participant picks.
+3. Register it in `src/lib/tournament-data.ts` (`AVAILABLE_YEARS` array + `getTournamentData` switch).
+4. The rest of the engine picks it up automatically.
 
 ### Admin Dashboard (`/demo/admin`)
 

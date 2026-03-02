@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import {
   Menu, Trophy, BarChart3, Target, Zap, Play, Settings,
-  Users, LogOut, ChevronDown, Crown, X, Grid2X2
+  Users, LogOut, ChevronDown, Crown, X, Grid2X2, GitBranch
 } from "lucide-react"
 import type { Session } from "next-auth"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
@@ -29,10 +29,11 @@ interface NavbarProps {
 
 const NAV_LINKS = [
   { href: "/leaderboard", label: "Leaderboard", icon: BarChart3 },
-  { href: "/picks",       label: "My Picks",    icon: Target },
-  { href: "/scores",      label: "Scores",      icon: Zap },
-  { href: "/simulator",   label: "Simulator",   icon: Play },
-  { href: "/teams",       label: "Teams",       icon: Grid2X2 },
+  { href: "/picks", label: "My Picks", icon: Target },
+  { href: "/scores", label: "Scores", icon: Zap },
+  { href: "/bracket", label: "Bracket", icon: GitBranch },
+  { href: "/simulator", label: "Simulator", icon: Play },
+  { href: "/teams", label: "Teams", icon: Grid2X2 },
 ]
 
 export function Navbar({ session, demoMode, linkPrefix = "" }: NavbarProps) {
@@ -81,11 +82,10 @@ export function Navbar({ session, demoMode, linkPrefix = "" }: NavbarProps) {
               <Link
                 key={href}
                 href={prefixHref(href)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  active
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${active
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                }`}
+                  }`}
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
@@ -95,11 +95,10 @@ export function Navbar({ session, demoMode, linkPrefix = "" }: NavbarProps) {
           {isAdmin && (
             <Link
               href={prefixHref("/admin")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                isAdminActive
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isAdminActive
                   ? "bg-primary/15 text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-              }`}
+                }`}
             >
               <Settings className="h-3.5 w-3.5" />
               Admin
@@ -222,11 +221,10 @@ export function Navbar({ session, demoMode, linkPrefix = "" }: NavbarProps) {
                       key={href}
                       href={prefixHref(href)}
                       onClick={() => setOpen(false)}
-                      className={`flex items-center gap-2.5 text-sm px-3 py-2.5 rounded-lg transition-colors ${
-                        active
+                      className={`flex items-center gap-2.5 text-sm px-3 py-2.5 rounded-lg transition-colors ${active
                           ? "bg-primary/15 text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                      }`}
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                       {label}

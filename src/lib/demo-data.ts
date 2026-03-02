@@ -17,9 +17,7 @@ export interface DemoTeam {
   region: "East" | "West" | "South" | "Midwest"
   logoUrl: string | null
   isPlayIn: boolean
-  // Wins at each round checkpoint [Selection, R64, R32, S16, E8, F4, NCG, Champion]
   winsAtRound: number[]
-  // Whether eliminated at each checkpoint
   elimAtRound: boolean[]
 }
 
@@ -30,7 +28,6 @@ export interface DemoUser {
   isPaid: boolean
   charityPreference: string | null
   role?: "USER" | "ADMIN" | "SUPERADMIN"
-  // 8 team IDs this user picked
   picks: string[]
 }
 
@@ -45,250 +42,309 @@ export const ROUND_LABELS = [
   "Champion Crowned",
 ]
 
-// ─── 2025 Teams ────────────────────────────────────────────────────────────────
-// winsAtRound[i] = number of tournament wins as of checkpoint i
-// elimAtRound[i] = true if the team is eliminated at/before checkpoint i
-
 export const DEMO_TEAMS: DemoTeam[] = [
-  // ── EAST REGION ──────────────────────────────────────────────────────────────
-  { id: "duke", name: "Duke", shortName: "DUKE", seed: 1, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/150.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,5,6,6], elimAtRound: [false,false,false,false,false,false,false,false] }, // 2025 Champion
-  { id: "alabama", name: "Alabama", shortName: "ALA", seed: 2, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/333.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,4,4,4], elimAtRound: [false,false,false,false,false,true,true,true] }, // Lost F4
-  { id: "iowa-st", name: "Iowa State", shortName: "ISU", seed: 3, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/66.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] }, // Lost E8
-  { id: "maryland", name: "Maryland", shortName: "MD", seed: 4, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/120.png", isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "michigan-st", name: "Michigan State", shortName: "MSU", seed: 5, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/127.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] }, // Sweet 16 run
-  { id: "ole-miss", name: "Ole Miss", shortName: "MISS", seed: 6, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/145.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "new-mexico", name: "New Mexico", shortName: "UNM", seed: 7, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/167.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "uc-san-diego", name: "UC San Diego", shortName: "UCSD", seed: 8, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2724.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "byu", name: "BYU", shortName: "BYU", seed: 9, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/252.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "vanderbilt", name: "Vanderbilt", shortName: "VAN", seed: 10, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/238.png", isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "vt", name: "Virginia Tech", shortName: "VT", seed: 11, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/259.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "liberty", name: "Liberty", shortName: "LIB", seed: 12, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2335.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "yale", name: "Yale", shortName: "YALE", seed: 13, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/43.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "lipscomb", name: "Lipscomb", shortName: "LIP", seed: 14, region: "East", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "montana", name: "Montana", shortName: "MONT", seed: 15, region: "East", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "amer-univ", name: "American Univ.", shortName: "AMER", seed: 16, region: "East", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-
-  // ── WEST REGION ──────────────────────────────────────────────────────────────
-  { id: "florida", name: "Florida", shortName: "FLA", seed: 1, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/57.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,5,5,5], elimAtRound: [false,false,false,false,false,false,true,true] }, // Lost championship
-  { id: "st-johns", name: "St. John's", shortName: "SJU", seed: 2, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2599.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,4,4,4], elimAtRound: [false,false,false,false,false,true,true,true] }, // Lost F4
-  { id: "texas-tech", name: "Texas Tech", shortName: "TTU", seed: 3, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] },
-  { id: "maryland-2", name: "Maryland", shortName: "MD", seed: 4, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/120.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "memphis", name: "Memphis", shortName: "MEM", seed: 5, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/235.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "missouri", name: "Missouri", shortName: "MIZ", seed: 6, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/142.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] },
-  { id: "kansas", name: "Kansas", shortName: "KU", seed: 7, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png", isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "ucf", name: "UCF", shortName: "UCF", seed: 8, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2116.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "kentucky", name: "Kentucky", shortName: "UK", seed: 9, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/96.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "arkansas", name: "Arkansas", shortName: "ARK", seed: 10, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/8.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "vcu", name: "VCU", shortName: "VCU", seed: 11, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2670.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "colorado-st", name: "Colorado State", shortName: "CSU", seed: 12, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/36.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "grand-canyon", name: "Grand Canyon", shortName: "GCU", seed: 13, region: "West", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "siu-edwardsville", name: "SIU Edwardsville", shortName: "SIUE", seed: 14, region: "West", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "alcorn", name: "Alcorn State", shortName: "ALCN", seed: 15, region: "West", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "norfolk-st", name: "Norfolk State", shortName: "NORF", seed: 16, region: "West", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-
-  // ── SOUTH REGION ─────────────────────────────────────────────────────────────
-  { id: "auburn", name: "Auburn", shortName: "AUB", seed: 1, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,4,4,4], elimAtRound: [false,false,false,false,false,true,true,true] }, // Lost F4
-  { id: "michigan", name: "Michigan", shortName: "MICH", seed: 2, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/130.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] },
-  { id: "iowa", name: "Iowa", shortName: "IOWA", seed: 3, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2294.png", isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "texas-am", name: "Texas A&M", shortName: "TAMU", seed: 4, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/245.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "oregon", name: "Oregon", shortName: "ORE", seed: 5, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] },
-  { id: "louisville", name: "Louisville", shortName: "LOU", seed: 6, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/97.png", isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "uconn", name: "UConn", shortName: "CONN", seed: 7, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/41.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "gonzaga", name: "Gonzaga", shortName: "GONZ", seed: 8, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2250.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,5,5,5], elimAtRound: [false,false,false,false,false,false,true,true] }, // Cinderella! Lost championship
-  { id: "baylor", name: "Baylor", shortName: "BAY", seed: 9, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/239.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "utah-st", name: "Utah State", shortName: "USU", seed: 10, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/328.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "drake", name: "Drake", shortName: "DRK", seed: 11, region: "South", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "uc-irvine", name: "UC Irvine", shortName: "UCI", seed: 12, region: "South", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "high-point", name: "High Point", shortName: "HPU", seed: 13, region: "South", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "troy", name: "Troy", shortName: "TROY", seed: 14, region: "South", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "wofford", name: "Wofford", shortName: "WOF", seed: 15, region: "South", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "southern-univ", name: "Southern Univ.", shortName: "SOU", seed: 16, region: "South", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-
-  // ── MIDWEST REGION ───────────────────────────────────────────────────────────
-  { id: "houston", name: "Houston", shortName: "HOU", seed: 1, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/248.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,4,4,4], elimAtRound: [false,false,false,false,false,true,true,true] }, // Lost F4
-  { id: "tennessee", name: "Tennessee", shortName: "TENN", seed: 2, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,4,5,5,5], elimAtRound: [false,false,false,false,false,false,true,true] }, // Final Four run
-  { id: "kentucky-2", name: "Kentucky", shortName: "UK", seed: 3, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/96.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] },
-  { id: "purdue", name: "Purdue", shortName: "PUR", seed: 4, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2509.png", isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "clemson", name: "Clemson", shortName: "CLEM", seed: 5, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/228.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "illinois", name: "Illinois", shortName: "ILL", seed: 6, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/356.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "ucla", name: "UCLA", shortName: "UCLA", seed: 7, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/26.png", isPlayIn: false,
-    winsAtRound: [0,1,2,3,3,3,3,3], elimAtRound: [false,false,false,false,true,true,true,true] },
-  { id: "oklahoma", name: "Oklahoma", shortName: "OU", seed: 8, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/201.png", isPlayIn: false,
-    winsAtRound: [0,1,2,2,2,2,2,2], elimAtRound: [false,false,false,true,true,true,true,true] },
-  { id: "georgia", name: "Georgia", shortName: "UGA", seed: 9, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/61.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "north-carolina", name: "North Carolina", shortName: "UNC", seed: 10, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/153.png", isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "wake-forest", name: "Wake Forest", shortName: "WAKE", seed: 11, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/154.png", isPlayIn: false,
-    winsAtRound: [0,1,1,1,1,1,1,1], elimAtRound: [false,false,true,true,true,true,true,true] },
-  { id: "james-madison", name: "James Madison", shortName: "JMU", seed: 12, region: "Midwest", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "akron", name: "Akron", shortName: "AKR", seed: 13, region: "Midwest", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "se-louisiana", name: "SE Louisiana", shortName: "SELA", seed: 14, region: "Midwest", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "prairie-view", name: "Prairie View A&M", shortName: "PVAM", seed: 15, region: "Midwest", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
-  { id: "omaha", name: "Nebraska Omaha", shortName: "UNO", seed: 16, region: "Midwest", logoUrl: null, isPlayIn: false,
-    winsAtRound: [0,0,0,0,0,0,0,0], elimAtRound: [false,true,true,true,true,true,true,true] },
+  {
+    id: "duke", name: "Duke", shortName: "DUKE", seed: 1, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/150.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 4, 4, 4, 4], elimAtRound: [false, false, false, false, false, true, true, true]
+  },
+  {
+    id: "alabama", name: "Alabama", shortName: "ALA", seed: 2, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/333.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 3, 3, 3, 3], elimAtRound: [false, false, false, false, true, true, true, true]
+  },
+  {
+    id: "wisconsin", name: "Wisconsin", shortName: "WISC", seed: 3, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/275.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "arizona", name: "Arizona", shortName: "ARIZ", seed: 4, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/12.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "oregon", name: "Oregon", shortName: "ORE", seed: 5, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "byu", name: "BYU", shortName: "BYU", seed: 6, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/252.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "saint-marys", name: "Saint Mary's", shortName: "SMC", seed: 7, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2608.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "mississippi-st", name: "Mississippi State", shortName: "MSST", seed: 8, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/344.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "baylor", name: "Baylor", shortName: "BAY", seed: 9, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/239.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "vanderbilt", name: "Vanderbilt", shortName: "VAN", seed: 10, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/238.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "vcu", name: "VCU", shortName: "VCU", seed: 11, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2670.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "liberty", name: "Liberty", shortName: "LIB", seed: 12, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2335.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "akron", name: "Akron", shortName: "AKR", seed: 13, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2006.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "montana", name: "Montana", shortName: "MONT", seed: 14, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/149.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "robert-morris", name: "Robert Morris", shortName: "RMU", seed: 15, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2523.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "mount-st-marys", name: "Mount St. Mary's", shortName: "MTST", seed: 16, region: "East", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/116.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "florida", name: "Florida", shortName: "FLA", seed: 1, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/57.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 4, 5, 6, 6], elimAtRound: [false, false, false, false, false, false, false, true]
+  },
+  {
+    id: "st-johns", name: "St. John's", shortName: "SJU", seed: 2, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2599.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "texas-tech", name: "Texas Tech", shortName: "TTU", seed: 3, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 3, 3, 3, 3], elimAtRound: [false, false, false, false, true, true, true, true]
+  },
+  {
+    id: "maryland", name: "Maryland", shortName: "MD", seed: 4, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/120.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "memphis", name: "Memphis", shortName: "MEM", seed: 5, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/235.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "missouri", name: "Missouri", shortName: "MIZ", seed: 6, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/142.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "kansas", name: "Kansas", shortName: "KU", seed: 7, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "uconn", name: "UConn", shortName: "CONN", seed: 8, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/41.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "oklahoma", name: "Oklahoma", shortName: "OU", seed: 9, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/201.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "arkansas", name: "Arkansas", shortName: "ARK", seed: 10, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/8.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "drake", name: "Drake", shortName: "DRK", seed: 11, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2181.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "colorado-st", name: "Colorado State", shortName: "CSU", seed: 12, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/36.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "grand-canyon", name: "Grand Canyon", shortName: "GCU", seed: 13, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2253.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "unc-wilmington", name: "UNC Wilmington", shortName: "UNCW", seed: 14, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/350.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "omaha", name: "Omaha", shortName: "OMA", seed: 15, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2437.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "norfolk-st", name: "Norfolk State", shortName: "NORF", seed: 16, region: "West", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2458.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "auburn", name: "Auburn", shortName: "AUB", seed: 1, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 4, 4, 4, 4], elimAtRound: [false, false, false, false, false, true, true, true]
+  },
+  {
+    id: "michigan-st", name: "Michigan State", shortName: "MSU", seed: 2, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/127.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 3, 3, 3, 3], elimAtRound: [false, false, false, false, true, true, true, true]
+  },
+  {
+    id: "iowa-st", name: "Iowa State", shortName: "ISU", seed: 3, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/66.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "texas-am", name: "Texas A&M", shortName: "TAMU", seed: 4, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/245.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "michigan", name: "Michigan", shortName: "MICH", seed: 5, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/130.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "ole-miss", name: "Ole Miss", shortName: "MISS", seed: 6, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/145.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "marquette", name: "Marquette", shortName: "MARQ", seed: 7, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/269.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "louisville", name: "Louisville", shortName: "LOU", seed: 8, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/97.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "creighton", name: "Creighton", shortName: "CREI", seed: 9, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/156.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "new-mexico", name: "New Mexico", shortName: "UNM", seed: 10, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/167.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "north-carolina", name: "North Carolina", shortName: "UNC", seed: 11, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/153.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "uc-san-diego", name: "UC San Diego", shortName: "UCSD", seed: 12, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2724.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "yale", name: "Yale", shortName: "YALE", seed: 13, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/43.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "lipscomb", name: "Lipscomb", shortName: "LIP", seed: 14, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/165.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "bryant", name: "Bryant", shortName: "BRY", seed: 15, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2803.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "alabama-st", name: "Alabama State", shortName: "ALST", seed: 16, region: "South", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2010.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "houston", name: "Houston", shortName: "HOU", seed: 1, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/248.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 4, 5, 5, 5], elimAtRound: [false, false, false, false, false, false, true, true]
+  },
+  {
+    id: "tennessee", name: "Tennessee", shortName: "TENN", seed: 2, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 3, 3, 3, 3, 3], elimAtRound: [false, false, false, false, true, true, true, true]
+  },
+  {
+    id: "kentucky", name: "Kentucky", shortName: "UK", seed: 3, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/96.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "purdue", name: "Purdue", shortName: "PUR", seed: 4, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2509.png", isPlayIn: false,
+    winsAtRound: [0, 1, 2, 2, 2, 2, 2, 2], elimAtRound: [false, false, false, true, true, true, true, true]
+  },
+  {
+    id: "clemson", name: "Clemson", shortName: "CLEM", seed: 5, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/228.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "illinois", name: "Illinois", shortName: "ILL", seed: 6, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/356.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "ucla", name: "UCLA", shortName: "UCLA", seed: 7, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/26.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "gonzaga", name: "Gonzaga", shortName: "GONZ", seed: 8, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2250.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "georgia", name: "Georgia", shortName: "UGA", seed: 9, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/61.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "utah-st", name: "Utah State", shortName: "USU", seed: 10, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/328.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "xavier", name: "Xavier", shortName: "XAV", seed: 11, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2752.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "mcneese-st", name: "McNeese State", shortName: "MCN", seed: 12, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2377.png", isPlayIn: false,
+    winsAtRound: [0, 1, 1, 1, 1, 1, 1, 1], elimAtRound: [false, false, true, true, true, true, true, true]
+  },
+  {
+    id: "high-point", name: "High Point", shortName: "HPU", seed: 13, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2274.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "troy", name: "Troy", shortName: "TROY", seed: 14, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2653.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "wofford", name: "Wofford", shortName: "WOF", seed: 15, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2747.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
+  {
+    id: "siu-edwardsville", name: "SIU Edwardsville", shortName: "SIUE", seed: 16, region: "Midwest", logoUrl: "https://a.espncdn.com/i/teamlogos/ncaa/500/2565.png", isPlayIn: false,
+    winsAtRound: [0, 0, 0, 0, 0, 0, 0, 0], elimAtRound: [false, true, true, true, true, true, true, true]
+  },
 ]
 
-// ─── 12 Demo Users with Picks ──────────────────────────────────────────────────
-// Each user picks exactly 8 teams — mixing smart picks and chaotic ones.
-// Some users have high-seed chalk, others go full cinderella mode.
+import { REAL_2025_USERS } from "./demo-users-2025"
 
+export const YOU_DEMO_USER: DemoUser = {
+  id: "user-you",
+  name: "You (Demo)",
+  email: "you@demo.test",
+  isPaid: true,
+  charityPreference: "UNICEF",
+  picks: ["duke", "gonzaga", "tennessee", "iowa-st", "michigan-st", "missouri", "wisconsin", "oregon"],
+}
+
+// ─── Demographic info is same
 export const DEMO_USERS: DemoUser[] = [
-  {
-    id: "user-chalk",
-    name: "Alex Chalk",
-    email: "alex@demo.test",
-    isPaid: true,
-    charityPreference: "St. Jude Children's Hospital",
-    picks: ["duke", "florida", "tennessee", "auburn", "alabama", "gonzaga", "iowa-st", "michigan-st"],
-  },
-  {
-    id: "user-cinderella",
-    name: "Casey Upset",
-    email: "casey@demo.test",
-    isPaid: true,
-    charityPreference: "Red Cross",
-    picks: ["gonzaga", "uc-irvine", "vanderbilt", "missouri", "arkansas", "wake-forest", "uc-san-diego", "illinois"],
-  },
-  {
-    id: "user-balanced",
-    name: "Jordan Balance",
-    email: "jordan@demo.test",
-    isPaid: true,
-    charityPreference: "Local Food Bank",
-    picks: ["duke", "tennessee", "gonzaga", "iowa-st", "michigan-st", "oregon", "missouri", "uc-irvine"],
-  },
-  {
-    id: "user-midwest",
-    name: "Sam Midwesterner",
-    email: "sam@demo.test",
-    isPaid: false,
-    charityPreference: null,
-    picks: ["houston", "tennessee", "kentucky-2", "purdue", "iowa", "michigan", "auburn", "duke"],
-  },
-  {
-    id: "user-high-seeds",
-    name: "Riley Seed Chaser",
-    email: "riley@demo.test",
-    isPaid: true,
-    charityPreference: "Habitat for Humanity",
-    picks: ["gonzaga", "uc-irvine", "colorado-st", "vanderbilt", "arkansas", "michigan-st", "missouri", "ucla"],
-  },
-  {
-    id: "user-no-luck",
-    name: "Taylor Busted",
-    email: "taylor@demo.test",
-    isPaid: true,
-    charityPreference: null,
-    picks: ["kentucky", "uconn", "baylor", "clemson", "vcu", "vt", "new-mexico", "drake"],
-  },
-  {
-    id: "user-florida-homer",
-    name: "Morgan Gator",
-    email: "morgan@demo.test",
-    isPaid: true,
-    charityPreference: "Boys & Girls Club",
-    picks: ["florida", "tennessee", "auburn", "duke", "gonzaga", "alabama", "iowa-st", "oregon"],
-  },
-  {
-    id: "user-contrarian",
-    name: "Quinn Contrarian",
-    email: "quinn@demo.test",
-    isPaid: false,
-    charityPreference: null,
-    picks: ["gonzaga", "tennessee", "missouri", "michigan-st", "iowa-st", "vanderbilt", "uc-irvine", "ucla"],
-  },
-  {
-    id: "user-analyst",
-    name: "Dana Analytics",
-    email: "dana@demo.test",
-    isPaid: true,
-    charityPreference: "STEM Education Fund",
-    picks: ["duke", "florida", "tennessee", "auburn", "gonzaga", "michigan-st", "iowa-st", "alabama"],
-  },
-  {
-    id: "user-random",
-    name: "Pat Random",
-    email: "pat@demo.test",
-    isPaid: true,
-    charityPreference: null,
-    picks: ["alabama", "st-johns", "texas-tech", "michigan", "houston", "iowa", "vanderbilt", "gonzaga"],
-  },
-  {
-    id: "user-newbie",
-    name: "Drew Newbie",
-    email: "drew@demo.test",
-    isPaid: false,
-    charityPreference: "Children's Hospital",
-    picks: ["duke", "florida", "auburn", "houston", "alabama", "tennessee", "iowa-st", "michigan"],
-  },
-  {
-    id: "user-you",
-    name: "You (Demo)",
-    email: "you@demo.test",
-    isPaid: true,
-    charityPreference: "UNICEF",
-    picks: ["duke", "gonzaga", "tennessee", "iowa-st", "michigan-st", "missouri", "uc-irvine", "oregon"],
-  },
+  YOU_DEMO_USER,
+  ...(REAL_2025_USERS as DemoUser[])
 ]
+
+export function generateRandomUsers(count: number, teams: DemoTeam[]): DemoUser[] {
+  const users: DemoUser[] = [YOU_DEMO_USER]
+  const teamIds = teams.map((t) => t.id)
+
+  for (let i = 0; i < count; i++) {
+    // Pick 8 random unique teams
+    const shuffled = [...teamIds].sort(() => 0.5 - Math.random())
+    const picks = shuffled.slice(0, 8)
+
+    users.push({
+      id: `random-user-${i}`,
+      name: `Random Picker ${i + 1}`,
+      email: `random${i}@demo.test`,
+      isPaid: Math.random() > 0.2,
+      charityPreference: null,
+      picks,
+    })
+  }
+  return users
+}
+
+export const DEMO_USER_SETS = {
+  real_2025: { label: "Real 2025 Picks", users: DEMO_USERS },
+  random_15: { label: "15 Random Users", users: generateRandomUsers(15, DEMO_TEAMS) },
+  random_30: { label: "30 Random Users", users: generateRandomUsers(30, DEMO_TEAMS) },
+  random_64: { label: "64 Random Users", users: generateRandomUsers(64, DEMO_TEAMS) },
+}
 
 // ─── Scoring helpers ───────────────────────────────────────────────────────────
 

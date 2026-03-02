@@ -22,6 +22,9 @@ import type { DemoTeam, DemoUser } from "@/lib/demo-data"
 import type { LeaderboardEntry, LiveGameData, HistorySnapshot } from "@/types"
 import type { Role } from "@/generated/prisma"
 import { getTournamentData, AVAILABLE_YEARS, getAvailableTournaments } from "@/lib/tournament-data"
+import { DEMO_USER_SETS } from "@/lib/demo-data"
+import { computeOptimal8 } from "@/lib/scoring"
+import type { TeamBracketInfo } from "@/lib/bracket-ppr"
 import {
   generateDemoGameSequence,
   computeLeaderboardAtGame,
@@ -53,6 +56,11 @@ interface DemoContextValue {
   selectedYear: number
   setSelectedYear: (year: number) => void
   availableTournaments: Array<{ year: number; label: string }>
+
+  // User Sets
+  selectedUserSetKey: string
+  setSelectedUserSetKey: (key: string) => void
+  availableUserSets: Array<{ key: string; label: string }>
 
   // Timeline
   gameIndex: number
@@ -133,6 +141,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const roundBoundaries = useMemo(() => getRoundBoundaries(gameSequence), [gameSequence])
   const totalGames = gameSequence.length
 
+  // ── User sets ──
+  const [selectedUserSetKey, setSelectedUserSetKeyRaw] = useState("real_2025")
+  const availableUserSets = useMemo(() => {
+    return Object.entries(DEMO_USER_SETS).map(([key, config]) => ({ key, label: config.label }))
+  }, [])
+  const activeUserSet = useMemo(() => {
+    const set = DEMO_USER_SETS[selectedUserSetKey as keyof typeof DEMO_USER_SETS]
+    return set ? set.users : DEMO_USER_SETS.real_2025.users
+  }, [selectedUserSetKey])
+
   // ── Timeline state ──
   const [gameIndex, setGameIndexRaw] = useState(-1)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -140,7 +158,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   // ── Persona state ──
   const availablePersonas = useMemo<DemoPersona[]>(() => {
-    const userPersonas: DemoPersona[] = tournamentData.users.map(u => ({
+    const userPersonas: DemoPersona[] = activeUserSet.map(u => ({
       userId: u.id,
       name: u.name,
       email: u.email,
@@ -152,7 +170,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       { userId: "demo-admin", name: "Demo Admin", email: "admin@demo.test", role: "ADMIN" as Role, isPaid: true },
       { userId: "demo-superadmin", name: "Super Admin", email: "superadmin@demo.test", role: "SUPERADMIN" as Role, isPaid: true },
     ]
-  }, [tournamentData])
+  }, [activeUserSet])
 
   const [currentPersona, setCurrentPersona] = useState<DemoPersona>(
     () => availablePersonas.find(p => p.userId === "user-you") ?? availablePersonas[0]
@@ -160,11 +178,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   // ── Picks state ──
   const [demoUserPicks, setDemoUserPicksMap] = useState<Map<string, string[]>>(
-    () => new Map(tournamentData.users.map(u => [u.id, [...u.picks]]))
+    () => new Map(activeUserSet.map(u => [u.id, [...u.picks]]))
   )
 
   // ── Mutable demo users (for admin edits) ──
-  const [demoUsers, setDemoUsers] = useState<DemoUser[]>(() => [...tournamentData.users])
+  const [demoUsers, setDemoUsers] = useState<DemoUser[]>(() => [...activeUserSet])
 
   // ── Settings state ──
   const [demoSettings, setDemoSettings] = useState<DemoSettings>({
@@ -190,21 +208,50 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     // Data will recompute via useMemo; picks reset in effect below
   }, [])
 
-  // Reset picks and users when tournament data changes
+  // Reset picks and users when tournament data or user set changes
   useEffect(() => {
-    setDemoUserPicksMap(new Map(tournamentData.users.map(u => [u.id, [...u.picks]])))
-    setDemoUsers([...tournamentData.users])
-    const youPersona = tournamentData.users.find(u => u.id === "user-you")
-    if (youPersona) {
-      setCurrentPersona({
-        userId: youPersona.id,
-        name: youPersona.name,
-        email: youPersona.email,
+    setDemoUserPicksMap(new Map(activeUserSet.map(u => [u.id, [...u.picks]])))
+    setDemoUsers([...activeUserSet])
+    const youPersona = activeUserSet.find(u => u.id === "user-you")
+
+    // If current persona corresponds to a user that might not exist in the new set, adjust it
+    setCurrentPersona(prev => {
+      // preserve non-USER roles (admins)
+      if (prev.role !== "USER") return prev;
+
+      // try to find the previous user in the new set
+      const existsInNewSet = activeUserSet.find(u => u.id === prev.userId)
+      if (existsInNewSet) {
+        return {
+          userId: existsInNewSet.id,
+          name: existsInNewSet.name,
+          email: existsInNewSet.email,
+          role: "USER" as Role,
+          isPaid: existsInNewSet.isPaid
+        }
+      }
+
+      // fallback to "you" or the first available
+      if (youPersona) {
+        return {
+          userId: youPersona.id,
+          name: youPersona.name,
+          email: youPersona.email,
+          role: "USER" as Role,
+          isPaid: youPersona.isPaid,
+        }
+      }
+
+      const first = activeUserSet[0]
+      return {
+        userId: first.id,
+        name: first.name,
+        email: first.email,
         role: "USER" as Role,
-        isPaid: youPersona.isPaid,
-      })
-    }
-  }, [tournamentData])
+        isPaid: first.isPaid
+      }
+    })
+  }, [activeUserSet])
 
   // ── Timeline methods ──
   const setGameIndex = useCallback(
@@ -301,17 +348,20 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     const history: HistorySnapshot[] = []
     for (let i = 0; i < gameSequence.length; i++) {
       const g = gameSequence[i]
+      const entries = computeLeaderboardAtGame(tournamentData.teams, demoUsers, gameSequence, i, demoUserPicks)
+
       history.push({
         gameIndex: i,
         gameLabel: `#${g.winnerSeed} ${g.winnerShortName} def. #${g.loserSeed} ${g.loserShortName}`,
         roundLabel: g.roundLabel,
-        entries: computeLeaderboardAtGame(tournamentData.teams, demoUsers, gameSequence, i, demoUserPicks),
+        entries,
       })
     }
     return history
   }, [tournamentData.teams, demoUsers, gameSequence, demoUserPicks])
 
   // ── Fake session ──
+  const [sessionExpires] = useState(() => new Date(Date.now() + 86400000).toISOString())
   const session = useMemo(() => ({
     user: {
       id: currentPersona.userId,
@@ -321,8 +371,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       isPaid: currentPersona.isPaid,
       image: null,
     },
-    expires: new Date(Date.now() + 86400000).toISOString(),
-  }), [currentPersona])
+    expires: sessionExpires,
+  }), [currentPersona, sessionExpires])
 
   const availableTournaments = useMemo(() => getAvailableTournaments(), [])
 
@@ -331,6 +381,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     selectedYear,
     setSelectedYear,
     availableTournaments,
+    selectedUserSetKey,
+    setSelectedUserSetKey: setSelectedUserSetKeyRaw,
+    availableUserSets,
     gameIndex,
     totalGames,
     setGameIndex,

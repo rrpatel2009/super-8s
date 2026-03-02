@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Crown, Heart, ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react"
+import { RefreshCw, Heart, ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react"
 import type { LeaderboardEntry, ResolvedPickSummary } from "@/types"
 
 // ── Seed-tier helpers (consistent with picks/team-card color scheme) ──────────
@@ -16,60 +16,63 @@ function getSeedTier(seed: number): "elite" | "strong" | "mid" | "longshot" {
 }
 
 const TIER_CLASSES = {
-  elite: { card: "border-primary/30", badge: "bg-primary/20 text-primary/90", quad: "bg-primary/70" },
-  strong: { card: "border-blue-400/30", badge: "bg-blue-400/20 text-blue-400/90", quad: "bg-blue-400/70" },
-  mid: { card: "border-emerald-400/30", badge: "bg-emerald-400/20 text-emerald-400/90", quad: "bg-emerald-400/70" },
-  longshot: { card: "border-purple-400/30", badge: "bg-purple-400/20 text-purple-400/90", quad: "bg-purple-400/70" },
-}
-
-// Region quadrant grid — East=top-right, West=top-left, South=bottom-right, Midwest=bottom-left
-const REGION_QUADRANT: Record<string, number> = { West: 0, East: 1, Midwest: 2, South: 3 }
-
-function RegionQuadrant({ region, tierQuadClass }: { region: string; tierQuadClass: string }) {
-  const activeIdx = REGION_QUADRANT[region] ?? -1
-  return (
-    <div className="grid grid-cols-2 grid-rows-2 gap-[2px] w-[14px] h-[14px] shrink-0" title={region}>
-      {[0, 1, 2, 3].map(i => (
-        <div
-          key={i}
-          className={`rounded-[1px] ${i === activeIdx ? tierQuadClass : "bg-muted/30"}`}
-        />
-      ))}
-    </div>
-  )
+  elite: { card: "border-primary/40", badge: "bg-primary/20 text-primary/90", quad: "bg-primary/70", solid: "bg-primary text-primary-foreground" },
+  strong: { card: "border-blue-400/40", badge: "bg-blue-400/20 text-blue-400/90", quad: "bg-blue-400/70", solid: "bg-blue-500 text-white" },
+  mid: { card: "border-emerald-400/40", badge: "bg-emerald-400/20 text-emerald-400/90", quad: "bg-emerald-400/70", solid: "bg-emerald-500 text-white" },
+  longshot: { card: "border-purple-400/40", badge: "bg-purple-400/20 text-purple-400/90", quad: "bg-purple-400/70", solid: "bg-purple-500 text-white" },
 }
 
 // ── Inline logo strip — always visible in the leaderboard row ──────────────
 
-function PicksLogoStrip({ picks }: { picks: ResolvedPickSummary[] }) {
-  if (!picks.length) return null
+function PicksLogoStrip({ picks, padTo }: { picks: ResolvedPickSummary[], padTo?: number }) {
+  const activePicks = picks.filter(p => !p.eliminated)
+  const eliminatedPicks = picks.filter(p => p.eliminated)
+
+  const emptySlots = Math.max(0, (padTo || 0) - picks.length)
+
+  if (!picks.length && !emptySlots) return null
+
+  const renderPick = (pick: ResolvedPickSummary) => (
+    <div
+      key={pick.teamId}
+      className="relative w-7 h-7 shrink-0"
+      title={`${pick.shortName} (#${pick.seed})${pick.eliminated ? " — eliminated" : ""}`}
+    >
+      <div
+        className={`relative w-7 h-7 rounded-sm border overflow-hidden flex items-center justify-center p-0.5 text-[8px] font-bold ${pick.eliminated
+          ? "grayscale opacity-40 border-border/30 bg-muted/20"
+          : `border-border/50 bg-background shadow-sm ${TIER_CLASSES[getSeedTier(pick.seed)].card}`
+          }`}
+      >
+        {pick.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={pick.logoUrl} alt="" className="w-full h-full object-contain" />
+        ) : (
+          <span className="text-[7.5px] font-bold text-muted-foreground leading-none text-center px-0.5 break-all">{pick.shortName.substring(0, 3)}</span>
+        )}
+      </div>
+      {/* Tiny seed badge for inline strip */}
+      <div className={`absolute -bottom-1 -right-1 w-[14px] h-[14px] rounded-sm flex items-center justify-center text-[7.5px] font-black shadow-sm border border-background ${TIER_CLASSES[getSeedTier(pick.seed)].solid}`}>
+        {pick.seed}
+      </div>
+    </div>
+  )
+
   return (
-    <div className="flex flex-wrap gap-1 mt-1.5">
-      {picks.map((pick) => (
-        <div
-          key={pick.teamId}
-          className="relative w-6 h-6 shrink-0"
-          title={`${pick.shortName} (#${pick.seed})${pick.eliminated ? " — eliminated" : ""}`}
-        >
-          <div
-            className={`w-6 h-6 rounded-full border overflow-hidden flex items-center justify-center text-[8px] font-bold ${pick.eliminated
-                ? "grayscale opacity-40 border-border/30"
-                : "border-border/50"
-              }`}
-          >
-            {pick.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={pick.logoUrl} alt="" className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-muted-foreground">{pick.seed}</span>
-            )}
-          </div>
-          {pick.eliminated && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className="text-[9px] font-bold text-red-400/80 leading-none">✕</span>
-            </div>
+    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+      {activePicks.map(renderPick)}
+
+      {eliminatedPicks.length > 0 && (
+        <>
+          {activePicks.length > 0 && (
+            <div className="w-[2px] h-5 bg-red-500/60 rounded-full mx-0.5 shrink-0" />
           )}
-        </div>
+          {eliminatedPicks.map(renderPick)}
+        </>
+      )}
+
+      {Array.from({ length: emptySlots }).map((_, i) => (
+        <div key={`empty-${i}`} className="w-7 h-7 rounded-sm border border-border/30 bg-muted/10 shrink-0" title="Empty slot" />
       ))}
     </div>
   )
@@ -81,43 +84,62 @@ function PickCard({ pick }: { pick: ResolvedPickSummary }) {
   const pts = pick.seed * pick.wins
 
   return (
-    <div
-      className={`rounded-lg border p-2.5 text-xs transition-all ${pick.eliminated
-          ? `${tierCls.card} bg-muted/10 opacity-60`
-          : `${tierCls.card} bg-card`
-        }`}
-    >
-      {/* Top row: logo + name + region quadrant */}
-      <div className="flex items-center gap-1.5 mb-1.5">
+    <div className={`flex flex-col items-center gap-1.5 w-16 ${pick.eliminated ? "opacity-60 grayscale" : ""}`}>
+      {/* Logo container */}
+      <div className={`relative w-12 h-12 rounded-lg border flex items-center justify-center bg-card shadow-sm ${tierCls.card} p-1.5`}>
         {pick.logoUrl ? (
-          <img src={pick.logoUrl} alt="" className="h-5 w-5 object-contain shrink-0" />
+          <img src={pick.logoUrl} alt={pick.shortName} className="w-full h-full object-contain" />
         ) : (
-          <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-[8px] font-bold shrink-0">
-            {pick.shortName[0]}
-          </div>
+          <span className="text-[10px] font-bold text-muted-foreground">{pick.shortName.substring(0, 3)}</span>
         )}
-        <span
-          className={`font-semibold truncate flex-1 text-[11px] ${pick.eliminated ? "line-through text-muted-foreground" : ""
-            }`}
-        >
-          {pick.shortName}
-        </span>
-        <RegionQuadrant region={pick.region ?? ""} tierQuadClass={tierCls.quad} />
-      </div>
 
-      {/* Bottom row: seed badge + wins + pts */}
-      <div className="flex items-center justify-between gap-1">
-        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${tierCls.badge}`}>
-          #{pick.seed}
-        </span>
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <span>{pick.wins}W</span>
-          <span className={`font-mono font-semibold ${pick.eliminated ? "text-muted-foreground" : "text-primary"}`}>
-            {pts > 0 ? `${pts}pts` : "–"}
-            {pick.eliminated && pts > 0 && <span className="ml-0.5 opacity-70">✗</span>}
-          </span>
+        {/* Prominent Seed Badge */}
+        <div className={`absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded flex items-center justify-center text-[9px] font-black shadow-sm ${tierCls.solid}`}>
+          {pick.seed}
         </div>
       </div>
+
+      {/* Shaded square with details */}
+      <div className={`w-full rounded border p-1.5 flex flex-col items-center justify-center text-center ${tierCls.badge}`}>
+        <span className="text-[9px] font-extrabold truncate w-full">{pick.shortName}</span>
+        <div className="flex flex-col items-center gap-0 text-[9px] mt-0.5 opacity-90 font-medium">
+          <span className="font-semibold text-[8px] opacity-80 uppercase tracking-wider">{pick.wins} Wins</span>
+          <span className="font-mono font-bold mt-0.5">{pts > 0 ? `${pts} pts` : "–"}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function ExpandedPicksGrid({ picks }: { picks: ResolvedPickSummary[] }) {
+  const regions = [
+    { name: "West", id: "West" },
+    { name: "East", id: "East" },
+    { name: "Midwest", id: "Midwest" },
+    { name: "South", id: "South" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 w-full bg-muted/10 p-4 border-t border-border/50">
+      {regions.map((region) => {
+        const regionPicks = picks.filter(p => p.region === region.id);
+
+        return (
+          <div key={region.id} className="rounded-xl border border-border/60 bg-card p-3 relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 px-2.5 py-1 bg-muted/60 text-[9px] font-bold uppercase tracking-wider text-muted-foreground rounded-bl-lg border-l border-b border-border/40">
+              {region.name}
+            </div>
+
+            <div className="flex flex-wrap gap-4 mt-3">
+              {regionPicks.length > 0 ? (
+                regionPicks.map(pick => <PickCard key={pick.teamId} pick={pick} />)
+              ) : (
+                <span className="text-[10px] text-muted-foreground/50 italic py-2 pl-1">No picks</span>
+              )}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -132,37 +154,47 @@ export interface Optimal8Data {
 }
 
 function Optimal8Card({ data }: { data: Optimal8Data }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   return (
-    <div className="rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 mb-3">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        {/* Label + scores */}
-        <div className="flex items-center gap-2 min-w-0">
-          <Sparkles className="h-4 w-4 text-primary shrink-0" />
-          <div>
-            <p className="text-xs font-bold text-primary">Optimal 8</p>
-            <p className="text-[10px] text-muted-foreground">Best available picks by TPS potential</p>
+    <div className="rounded-xl border border-primary/25 bg-primary/5 mb-3 overflow-hidden transition-all shadow-sm shadow-primary/10">
+      <button
+        className="w-full text-left px-4 py-3 hover:bg-primary/10 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          {/* Label + scores */}
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="h-4 w-4 text-primary shrink-0" />
+            <div>
+              <p className="text-xs font-bold text-primary">Optimal 8</p>
+              <p className="text-[10px] text-muted-foreground">Best available picks by TPS potential</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs shrink-0">
+            <div className="text-right">
+              <p className="text-muted-foreground text-[10px]">Score</p>
+              <p className="font-mono font-semibold">{data.score}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-muted-foreground text-[10px]">PPR</p>
+              <p className="font-mono text-muted-foreground">+{data.ppr}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-muted-foreground text-[10px]">TPS</p>
+              <p className="font-mono font-bold text-primary text-base">{data.tps}</p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs shrink-0">
-          <div className="text-right">
-            <p className="text-muted-foreground text-[10px]">Score</p>
-            <p className="font-mono font-semibold">{data.score}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-muted-foreground text-[10px]">PPR</p>
-            <p className="font-mono text-muted-foreground">+{data.ppr}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-muted-foreground text-[10px]">TPS</p>
-            <p className="font-mono font-bold text-primary text-base">{data.tps}</p>
-          </div>
-        </div>
-      </div>
-      {/* Team logos */}
-      {data.picks.length > 0 && (
+        {/* Team logos */}
         <div className="mt-2 pt-2 border-t border-primary/15">
-          <PicksLogoStrip picks={data.picks} />
+          <PicksLogoStrip picks={data.picks} padTo={8} />
         </div>
+      </button>
+
+      {/* Expanded picks */}
+      {isExpanded && (
+        <ExpandedPicksGrid picks={data.picks} />
       )}
     </div>
   )
@@ -247,10 +279,10 @@ export function LeaderboardTable({ initialData, currentUserId, demoMode, optimal
   )
 
   const rankStyle = (rank: number) => {
-    if (rank === 1) return "rank-badge-gold"
-    if (rank === 2) return "rank-badge-silver"
-    if (rank === 3) return "rank-badge-bronze"
-    return "bg-muted/60 text-muted-foreground"
+    if (rank === 1) return "bg-primary/20 text-primary border-primary/30 shadow-sm"
+    if (rank === 2) return "bg-slate-200/20 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 shadow-sm"
+    if (rank === 3) return "bg-orange-800/10 text-orange-800 dark:text-orange-400 border-orange-800/20 shadow-sm"
+    return "bg-muted/60 text-muted-foreground border-transparent"
   }
 
   return (
@@ -298,8 +330,8 @@ export function LeaderboardTable({ initialData, currentUserId, demoMode, optimal
             <div
               key={entry.userId}
               className={`rounded-xl border overflow-hidden transition-all duration-200 ${isMe
-                  ? "border-primary/40 bg-primary/5 shadow-sm shadow-primary/10"
-                  : "border-border bg-card hover:border-border/80"
+                ? "border-primary/40 bg-primary/5 shadow-sm shadow-primary/10"
+                : "border-border bg-card hover:border-border/80"
                 }`}
             >
               {/* Main row */}
@@ -310,9 +342,9 @@ export function LeaderboardTable({ initialData, currentUserId, demoMode, optimal
                 <div className="grid grid-cols-[2.5rem_1fr_3.5rem_4rem_4rem_4rem_3.5rem] gap-2 items-center px-4 py-3">
                   {/* Rank */}
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${rankStyle(entry.rank)}`}
+                    className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 ${rankStyle(entry.rank)}`}
                   >
-                    {entry.rank <= 3 ? <Crown className="h-3.5 w-3.5" /> : `#${entry.rank}`}
+                    #{entry.rank}
                   </div>
 
                   {/* Name */}
@@ -339,10 +371,10 @@ export function LeaderboardTable({ initialData, currentUserId, demoMode, optimal
                   <div className="text-right">
                     <span
                       className={`text-sm font-mono font-medium ${entry.teamsRemaining === 0
-                          ? "text-muted-foreground"
-                          : entry.teamsRemaining >= 4
-                            ? "text-green-400"
-                            : "text-amber-400"
+                        ? "text-muted-foreground"
+                        : entry.teamsRemaining >= 4
+                          ? "text-green-400"
+                          : "text-amber-400"
                         }`}
                     >
                       {entry.teamsRemaining}
@@ -378,13 +410,7 @@ export function LeaderboardTable({ initialData, currentUserId, demoMode, optimal
 
               {/* Expanded picks */}
               {isExpanded && entry.picks.length > 0 && (
-                <div className="border-t border-border/50 px-4 py-3 bg-muted/20">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {entry.picks.map((pick) => (
-                      <PickCard key={pick.teamId} pick={pick} />
-                    ))}
-                  </div>
-                </div>
+                <ExpandedPicksGrid picks={entry.picks} />
               )}
             </div>
           )
