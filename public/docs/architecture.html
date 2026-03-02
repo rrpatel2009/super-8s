@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,7 +20,13 @@
       --purple: #bc8cff;
       --red: #f85149;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       background: var(--bg);
       color: var(--text);
@@ -28,20 +35,53 @@
       line-height: 1.6;
       padding: 48px 24px 96px;
     }
-    .page { max-width: 1100px; margin: 0 auto; }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
 
     /* Header */
-    .doc-header { margin-bottom: 48px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
-    .doc-header h1 { font-size: 2rem; font-weight: 700; color: var(--accent); }
-    .doc-header p { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+    .doc-header {
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+
+    .doc-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .doc-header p {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
 
     /* Sections */
     h2 {
-      font-size: 1.35rem; font-weight: 600; margin-top: 56px; margin-bottom: 16px;
-      color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px;
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-top: 56px;
+      margin-bottom: 16px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
     }
-    h3 { font-size: 1.05rem; font-weight: 600; margin-top: 28px; margin-bottom: 10px; color: var(--blue); }
-    p { margin-bottom: 12px; }
+
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 28px;
+      margin-bottom: 10px;
+      color: var(--blue);
+    }
+
+    p {
+      margin-bottom: 12px;
+    }
 
     /* Code / pre */
     code {
@@ -53,6 +93,7 @@
       font-size: 0.85em;
       color: #f0883e;
     }
+
     pre {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -63,7 +104,14 @@
       font-size: 0.85em;
       line-height: 1.6;
     }
-    pre code { background: none; border: none; padding: 0; color: var(--text); font-size: inherit; }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+      font-size: inherit;
+    }
 
     /* Mermaid wrapper */
     .diagram {
@@ -77,24 +125,62 @@
     }
 
     /* Tables */
-    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.9em; }
-    th {
-      background: var(--surface); color: var(--accent);
-      text-align: left; padding: 10px 14px;
-      border: 1px solid var(--border); font-weight: 600;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 0.9em;
     }
-    td { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; }
-    tr:nth-child(even) td { background: #ffffff05; }
+
+    th {
+      background: var(--surface);
+      color: var(--accent);
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #ffffff05;
+    }
 
     /* Badges */
     .badge {
-      display: inline-block; border-radius: 4px; padding: 2px 8px;
-      font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+      display: inline-block;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.75em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
-    .badge-fe  { background: #1c3a5e; color: var(--blue); }
-    .badge-be  { background: #1c3a28; color: var(--green); }
-    .badge-db  { background: #2e1b3c; color: var(--purple); }
-    .badge-shared { background: var(--accent-soft); color: var(--accent); }
+
+    .badge-fe {
+      background: #1c3a5e;
+      color: var(--blue);
+    }
+
+    .badge-be {
+      background: #1c3a28;
+      color: var(--green);
+    }
+
+    .badge-db {
+      background: #2e1b3c;
+      color: var(--purple);
+    }
+
+    .badge-shared {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
 
     /* Callouts */
     .callout {
@@ -105,63 +191,123 @@
       margin: 16px 0;
       font-size: 0.9em;
     }
-    .callout strong { color: var(--accent); }
+
+    .callout strong {
+      color: var(--accent);
+    }
 
     /* TOC */
-    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 40px; }
-    .toc h3 { margin-top: 0; margin-bottom: 12px; font-size: 0.9rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-    .toc ol { padding-left: 20px; }
-    .toc li { margin: 4px 0; }
-    .toc a { color: var(--blue); text-decoration: none; }
-    .toc a:hover { text-decoration: underline; }
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .toc ol {
+      padding-left: 20px;
+    }
+
+    .toc li {
+      margin: 4px 0;
+    }
+
+    .toc a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
 
     /* Scoring formula box */
     .formula-box {
-      background: var(--surface); border: 1px solid var(--accent);
-      border-radius: 8px; padding: 16px 20px; margin: 16px 0;
-      font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.9em;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.9em;
     }
-    .formula-box div { margin: 4px 0; }
-    .formula-box .label { color: var(--muted); display: inline-block; width: 220px; }
-    .formula-box .eq { color: var(--accent); font-weight: 700; }
+
+    .formula-box div {
+      margin: 4px 0;
+    }
+
+    .formula-box .label {
+      color: var(--muted);
+      display: inline-block;
+      width: 220px;
+    }
+
+    .formula-box .eq {
+      color: var(--accent);
+      font-weight: 700;
+    }
 
     /* UL / OL */
-    ul, ol { padding-left: 22px; margin-bottom: 12px; }
-    li { margin: 4px 0; }
+    ul,
+    ol {
+      padding-left: 22px;
+      margin-bottom: 12px;
+    }
+
+    li {
+      margin: 4px 0;
+    }
   </style>
 </head>
+
 <body>
-<div class="page">
+  <div class="page">
 
-  <div class="doc-header">
-    <h1>Super 8s — Architecture Reference</h1>
-    <p>Systems overview: frontend / backend separation · database schema · API layer · business logic · demo mode architecture</p>
-  </div>
+    <div class="doc-header">
+      <h1>Super 8s — Architecture Reference</h1>
+      <p>Systems overview: frontend / backend separation · database schema · API layer · business logic · demo mode
+        architecture</p>
+    </div>
 
-  <nav class="toc">
-    <h3>Contents</h3>
-    <ol>
-      <li><a href="#system-overview">System Overview</a></li>
-      <li><a href="#fe-be-boundary">FE / BE Boundary</a></li>
-      <li><a href="#database">Database Schema</a></li>
-      <li><a href="#api-layer">API Layer</a></li>
-      <li><a href="#auth">Authentication & Authorization</a></li>
-      <li><a href="#scoring">Business Logic: Scoring</a></li>
-      <li><a href="#espn">ESPN Sync Pipeline</a></li>
-      <li><a href="#demo-mode">Demo Mode Architecture</a></li>
-      <li><a href="#data-flows">Key Data Flows</a></li>
-      <li><a href="#file-map">Critical File Map</a></li>
-    </ol>
-  </nav>
+    <nav class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#system-overview">System Overview</a></li>
+        <li><a href="#fe-be-boundary">FE / BE Boundary</a></li>
+        <li><a href="#database">Database Schema</a></li>
+        <li><a href="#api-layer">API Layer</a></li>
+        <li><a href="#auth">Authentication & Authorization</a></li>
+        <li><a href="#scoring">Business Logic: Scoring</a></li>
+        <li><a href="#espn">ESPN Sync Pipeline</a></li>
+        <li><a href="#demo-mode">Demo Mode Architecture</a></li>
+        <li><a href="#data-flows">Key Data Flows</a></li>
+        <li><a href="#file-map">Critical File Map</a></li>
+        <li><a href="#suggestions">Suggestions &amp; Alternative Architectures</a></li>
+      </ol>
+    </nav>
 
 
-  <!-- ═══════════════════════════════ 1. SYSTEM OVERVIEW ═══════════════════════════════ -->
-  <h2 id="system-overview">1. System Overview</h2>
+    <!-- ═══════════════════════════════ 1. SYSTEM OVERVIEW ═══════════════════════════════ -->
+    <h2 id="system-overview">1. System Overview</h2>
 
-  <p>Super 8s is a Next.js 16 App Router application. Users pick <strong>8 NCAA tournament teams</strong>, score <code>seed × wins</code>, and compete on a live leaderboard. The app has two parallel execution paths: the <strong>real app</strong> (auth-gated, Neon PostgreSQL via Prisma) and a <strong>public demo mode</strong> (no auth, pure in-memory React context).</p>
+    <p>Super 8s is a Next.js 16 App Router application. Users pick <strong>8 NCAA tournament teams</strong>, score
+      <code>seed × wins</code>, and compete on a live leaderboard. The app has two parallel execution paths: the
+      <strong>real app</strong> (auth-gated, Neon PostgreSQL via Prisma) and a <strong>public demo mode</strong> (no
+      auth, pure in-memory React context).
+    </p>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 graph TD
     subgraph Client["Browser"]
         SC["Server Components\n(RSC — no bundle)"]
@@ -205,16 +351,16 @@ graph TD
     style DataLayer fill:#0d2015,stroke:#3fb950
     style NextJS fill:#0d1a2e,stroke:#58a6ff
     </pre>
-  </div>
+    </div>
 
 
-  <!-- ═══════════════════════════════ 2. FE / BE BOUNDARY ═══════════════════════════════ -->
-  <h2 id="fe-be-boundary">2. Frontend / Backend Boundary</h2>
+    <!-- ═══════════════════════════════ 2. FE / BE BOUNDARY ═══════════════════════════════ -->
+    <h2 id="fe-be-boundary">2. Frontend / Backend Boundary</h2>
 
-  <p>Next.js App Router blurs the traditional FE/BE line. Here's exactly where each concern lives:</p>
+    <p>Next.js App Router blurs the traditional FE/BE line. Here's exactly where each concern lives:</p>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 graph LR
     subgraph FE["FRONTEND (browser bundle)"]
         direction TB
@@ -252,33 +398,97 @@ graph LR
     FE -->|"fetch() →"| BE
     SHARED -->|"runs on server,\nsends HTML to"| FE
     </pre>
-  </div>
+    </div>
 
-  <h3>Component Classification</h3>
-  <table>
-    <tr><th>Component / File</th><th>Type</th><th>Why</th></tr>
-    <tr><td><code>(protected)/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Checks session, redirects to /login</td></tr>
-    <tr><td><code>admin/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Checks admin role, redirects non-admins</td></tr>
-    <tr><td><code>leaderboard/page.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Calls <code>computeLeaderboard()</code> directly (Prisma)</td></tr>
-    <tr><td><code>picks/page.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Fetches teams + existing picks from Prisma</td></tr>
-    <tr><td><code>LeaderboardTable</code></td><td><span class="badge badge-fe">Client</span></td><td>Sorting interactions, tooltip state</td></tr>
-    <tr><td><code>PicksForm</code></td><td><span class="badge badge-fe">Client</span></td><td>Selection state, submit handler</td></tr>
-    <tr><td><code>ScoresGrid</code></td><td><span class="badge badge-fe">Client</span></td><td>Auto-refresh interval (60s)</td></tr>
-    <tr><td><code>SimulatorPanel</code></td><td><span class="badge badge-fe">Client</span></td><td>Hypothetical override state</td></tr>
-    <tr><td><code>DemoControlPanel</code></td><td><span class="badge badge-fe">Client</span></td><td>Timeline scrubber, play/pause, all interactivity</td></tr>
-    <tr><td><code>LeaderboardHistoryChart</code></td><td><span class="badge badge-fe">Client</span></td><td>Recharts, cursor drag state</td></tr>
-    <tr><td><code>scoring.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Pure functions — used server-side in leaderboard API + client-side in simulator</td></tr>
-    <tr><td><code>bracket-ppr.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Pure algorithm — used in scoring.ts and demo context</td></tr>
-  </table>
+    <h3>Component Classification</h3>
+    <table>
+      <tr>
+        <th>Component / File</th>
+        <th>Type</th>
+        <th>Why</th>
+      </tr>
+      <tr>
+        <td><code>(protected)/layout.tsx</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Checks session, redirects to /login</td>
+      </tr>
+      <tr>
+        <td><code>admin/layout.tsx</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Checks admin role, redirects non-admins</td>
+      </tr>
+      <tr>
+        <td><code>leaderboard/page.tsx</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Calls <code>computeLeaderboard()</code> directly (Prisma)</td>
+      </tr>
+      <tr>
+        <td><code>picks/page.tsx</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Fetches teams + existing picks from Prisma</td>
+      </tr>
+      <tr>
+        <td><code>LeaderboardTable</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Sorting interactions, tooltip state</td>
+      </tr>
+      <tr>
+        <td><code>PicksForm</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Selection state, view modes (Region / All / By Seed), submit handler</td>
+      </tr>
+      <tr>
+        <td><code>ScoresGrid</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Auto-refresh interval (60s)</td>
+      </tr>
+      <tr>
+        <td><code>SimulatorPanel</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>AdvancingBracket simulator + live docked leaderboard sidebar</td>
+      </tr>
+      <tr>
+        <td><code>AdvancingBracket</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Dual-mode: <code>picks</code> (team selection) or <code>simulator</code> (cascade game picks)</td>
+      </tr>
+      <tr>
+        <td><code>TournamentBracket</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Read-only 64-team bracket on /demo/bracket</td>
+      </tr>
+      <tr>
+        <td><code>DemoControlPanel</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Timeline scrubber, play/pause, year/persona selectors</td>
+      </tr>
+      <tr>
+        <td><code>LeaderboardHistoryChart</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Recharts: 24 series + Optimal 8 line, draggable cursor</td>
+      </tr>
+      <tr>
+        <td><code>scoring.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Pure functions — computeLeaderboard, computeOptimal8, computeSimulatedLeaderboard</td>
+      </tr>
+      <tr>
+        <td><code>bracket-ppr.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Bracket-aware PPR algorithm — resolves bracket conflicts for accurate TPS</td>
+      </tr>
+    </table>
 
 
-  <!-- ═══════════════════════════════ 3. DATABASE ═══════════════════════════════ -->
-  <h2 id="database">3. Database Schema</h2>
+    <!-- ═══════════════════════════════ 3. DATABASE ═══════════════════════════════ -->
+    <h2 id="database">3. Database Schema</h2>
 
-  <p>Provider: <strong>Neon</strong> (serverless PostgreSQL). ORM: <strong>Prisma 7</strong> with <code>@prisma/adapter-neon</code>. Client generated to non-default path <code>src/generated/prisma</code>.</p>
+    <p>Provider: <strong>Neon</strong> (serverless PostgreSQL). ORM: <strong>Prisma 7</strong> with
+      <code>@prisma/adapter-neon</code>. Client generated to non-default path <code>src/generated/prisma</code>.
+    </p>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 erDiagram
     User {
         string id PK
@@ -361,23 +571,28 @@ erDiagram
     Team ||--o{ TournamentGame : "team2"
     Team ||--o{ TournamentGame : "winner"
     </pre>
-  </div>
+    </div>
 
-  <h3>Key Schema Design Decisions</h3>
-  <ul>
-    <li><strong>PlayInSlot</strong> decouples play-in uncertainty from picks. Users can pick a "slot" before the play-in game resolves — <code>winnerId</code> is set once the game completes.</li>
-    <li><strong>Pick has dual FK</strong>: <code>teamId</code> (direct pick) OR <code>playInSlotId</code> (pick-a-slot). Exactly one is non-null.</li>
-    <li><strong>AppSettings singleton</strong>: always <code>id = "main"</code>. Use upsert to guarantee existence.</li>
-    <li><strong>Team.wins</strong> is the authoritative win count — incremented by ESPN sync, used in all score calculations.</li>
-    <li><strong>TournamentGame.round = 0</strong> means play-in. Rounds 1–6 map to R64 → Championship. Round 0 wins don't count toward user scores.</li>
-  </ul>
+    <h3>Key Schema Design Decisions</h3>
+    <ul>
+      <li><strong>PlayInSlot</strong> decouples play-in uncertainty from picks. Users can pick a "slot" before the
+        play-in game resolves — <code>winnerId</code> is set once the game completes.</li>
+      <li><strong>Pick has dual FK</strong>: <code>teamId</code> (direct pick) OR <code>playInSlotId</code>
+        (pick-a-slot). Exactly one is non-null.</li>
+      <li><strong>AppSettings singleton</strong>: always <code>id = "main"</code>. Use upsert to guarantee existence.
+      </li>
+      <li><strong>Team.wins</strong> is the authoritative win count — incremented by ESPN sync, used in all score
+        calculations.</li>
+      <li><strong>TournamentGame.round = 0</strong> means play-in. Rounds 1–6 map to R64 → Championship. Round 0 wins
+        don't count toward user scores.</li>
+    </ul>
 
 
-  <!-- ═══════════════════════════════ 4. API LAYER ═══════════════════════════════ -->
-  <h2 id="api-layer">4. API Layer</h2>
+    <!-- ═══════════════════════════════ 4. API LAYER ═══════════════════════════════ -->
+    <h2 id="api-layer">4. API Layer</h2>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 graph TD
     subgraph UserRoutes["User API (session-gated)"]
         P_GET["GET /api/picks\nFetch user picks + relations"]
@@ -416,22 +631,38 @@ graph TD
     CRON -->|"syncTournamentData()\nevery 5 min"| ESPN
     CRON --> DB
     </pre>
-  </div>
+    </div>
 
-  <h3>Caching Strategy</h3>
-  <table>
-    <tr><th>Route</th><th>Cache</th><th>Reason</th></tr>
-    <tr><td><code>GET /api/leaderboard</code></td><td><code>no-store</code></td><td>Scores change every game — always fresh</td></tr>
-    <tr><td><code>GET /api/scores</code></td><td><code>revalidate: 60</code></td><td>ESPN data cached 60s — reduces external calls</td></tr>
-    <tr><td><code>GET /api/admin/users</code></td><td>no-store</td><td>Admin needs current paid/role state</td></tr>
-  </table>
+    <h3>Caching Strategy</h3>
+    <table>
+      <tr>
+        <th>Route</th>
+        <th>Cache</th>
+        <th>Reason</th>
+      </tr>
+      <tr>
+        <td><code>GET /api/leaderboard</code></td>
+        <td><code>no-store</code></td>
+        <td>Scores change every game — always fresh</td>
+      </tr>
+      <tr>
+        <td><code>GET /api/scores</code></td>
+        <td><code>revalidate: 60</code></td>
+        <td>ESPN data cached 60s — reduces external calls</td>
+      </tr>
+      <tr>
+        <td><code>GET /api/admin/users</code></td>
+        <td>no-store</td>
+        <td>Admin needs current paid/role state</td>
+      </tr>
+    </table>
 
 
-  <!-- ═══════════════════════════════ 5. AUTH ═══════════════════════════════ -->
-  <h2 id="auth">5. Authentication &amp; Authorization</h2>
+    <!-- ═══════════════════════════════ 5. AUTH ═══════════════════════════════ -->
+    <h2 id="auth">5. Authentication &amp; Authorization</h2>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 sequenceDiagram
     participant U as User
     participant App as Next.js App
@@ -464,59 +695,83 @@ sequenceDiagram
     Auth-->>MW: Role = USER → unauthorized
     MW-->>U: Redirect to /leaderboard
     </pre>
-  </div>
+    </div>
 
-  <h3>Config Split (Edge Safety)</h3>
-  <div class="callout">
-    <strong>auth.config.ts</strong> — Edge-safe. No Prisma imports. Defines route protection logic only. Used by <code>middleware.ts</code> which runs in the Edge runtime.<br><br>
-    <strong>auth.ts</strong> — Full config. Imports Prisma adapter + Resend provider. Used by API routes and server components. <em>Never imported in middleware.</em>
-  </div>
+    <h3>Config Split (Edge Safety)</h3>
+    <div class="callout">
+      <strong>auth.config.ts</strong> — Edge-safe. No Prisma imports. Defines route protection logic only. Used by
+      <code>middleware.ts</code> which runs in the Edge runtime.<br><br>
+      <strong>auth.ts</strong> — Full config. Imports Prisma adapter + Resend provider. Used by API routes and server
+      components. <em>Never imported in middleware.</em>
+    </div>
 
-  <h3>Role Hierarchy</h3>
-  <table>
-    <tr><th>Role</th><th>Can Do</th></tr>
-    <tr><td><code>USER</code></td><td>View leaderboard / scores / picks; submit own picks before deadline</td></tr>
-    <tr><td><code>ADMIN</code></td><td>Everything USER can + edit settings, manage users (isPaid, roles), trigger ESPN sync, manage CMS</td></tr>
-    <tr><td><code>SUPERADMIN</code></td><td>Everything ADMIN can + can demote other ADMINs. Cannot be demoted by ADMINs.</td></tr>
-  </table>
+    <h3>Role Hierarchy</h3>
+    <table>
+      <tr>
+        <th>Role</th>
+        <th>Can Do</th>
+      </tr>
+      <tr>
+        <td><code>USER</code></td>
+        <td>View leaderboard / scores / picks; submit own picks before deadline</td>
+      </tr>
+      <tr>
+        <td><code>ADMIN</code></td>
+        <td>Everything USER can + edit settings, manage users (isPaid, roles), trigger ESPN sync, manage CMS</td>
+      </tr>
+      <tr>
+        <td><code>SUPERADMIN</code></td>
+        <td>Everything ADMIN can + can demote other ADMINs. Cannot be demoted by ADMINs.</td>
+      </tr>
+    </table>
 
 
-  <!-- ═══════════════════════════════ 6. SCORING ═══════════════════════════════ -->
-  <h2 id="scoring">6. Business Logic: Scoring</h2>
+    <!-- ═══════════════════════════════ 6. SCORING ═══════════════════════════════ -->
+    <h2 id="scoring">6. Business Logic: Scoring</h2>
 
-  <p>All scoring logic lives in <code>src/lib/scoring.ts</code>. The bracket-aware PPR algorithm lives in <code>src/lib/bracket-ppr.ts</code>.</p>
+    <p>All scoring logic lives in <code>src/lib/scoring.ts</code>. The bracket-aware PPR algorithm lives in
+      <code>src/lib/bracket-ppr.ts</code>.
+    </p>
 
-  <div class="formula-box">
-    <div><span class="label">Score (per team):</span> <span class="eq">seed × wins</span>  (rounds 1–6 only; play-in round 0 = 0)</div>
-    <div><span class="label">PPR (potential remaining):</span> <span class="eq">seed × max(0, 6 − wins)</span>  (alive teams only; 0 if eliminated)</div>
-    <div><span class="label">TPS (total projected):</span> <span class="eq">currentScore + PPR</span></div>
-    <div><span class="label">Leaderboard sort:</span> <span class="eq">TPS desc → currentScore desc → name asc</span></div>
-  </div>
+    <div class="formula-box">
+      <div><span class="label">Score (per team):</span> <span class="eq">seed × wins</span> (rounds 1–6 only; play-in
+        round 0 = 0)</div>
+      <div><span class="label">PPR (potential remaining):</span> <span class="eq">seed × max(0, 6 − wins)</span> (alive
+        teams only; 0 if eliminated)</div>
+      <div><span class="label">TPS (total projected):</span> <span class="eq">currentScore + PPR</span></div>
+      <div><span class="label">Optimal 8:</span> <span class="eq">max score achievable by any 8-team combo at current
+          game state</span> (greedy; tie-break by TPS desc)</div>
+      <div><span class="label">Leaderboard sort:</span> <span class="eq">Points desc → TPS desc → name asc</span></div>
+    </div>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 flowchart TD
     subgraph "computeLeaderboard() — scoring.ts"
         A["Load all users + picks\nfrom Prisma"] --> B["For each user:"]
         B --> C["resolvePickTeam()\nhandle PlayInSlot → Team"]
         C --> D["Sum seed × wins\n= currentScore"]
-        D --> E{"Bracket-aware PPR?"}
-        E -->|Yes| F["computeBracketAwarePPR()\nbracket-ppr.ts"]
-        E -->|No| G["Naive: seed × (6−wins)\nper alive team"]
-        F --> H["TPS = currentScore + PPR"]
-        G --> H
-        H --> I["Sort: TPS → score → name"]
+        D --> E["computeBracketAwarePPR()\nbracket-ppr.ts"]
+        E --> H["TPS = currentScore + PPR"]
+        H --> I["Sort: Points desc → TPS desc → name asc"]
         I --> J["Top 4 get charity preference"]
         J --> K["Return LeaderboardEntry[]"]
     end
+    subgraph "computeOptimal8() — scoring.ts"
+        O1["All alive non-eliminated teams"] --> O2["Score each: seed × wins + seed × remaining rounds"]
+        O2 --> O3["Greedy: pick top 8 by projected score\n(tie-break: TPS desc)"]
+        O3 --> O4["Theoretical ceiling — never decreases"]
+    end
     </pre>
-  </div>
+    </div>
 
-  <h3>Bracket-Aware PPR Algorithm</h3>
-  <p>Naive PPR ignores that two picked teams in the same bracket region can't both win all games. <code>bracket-ppr.ts</code> resolves this with a greedy bottom-up algorithm:</p>
+    <h3>Bracket-Aware PPR Algorithm</h3>
+    <p>Naive PPR ignores that two picked teams in the same bracket region can't both win all games.
+      <code>bracket-ppr.ts</code> resolves this with a greedy bottom-up algorithm:
+    </p>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 flowchart LR
     subgraph "bracket-ppr.ts: computeBracketAwarePPR()"
         A["Map picked alive teams\nto bracket slots\nseedToSlot(seed) → 0-7"] --> B
@@ -544,14 +799,14 @@ flowchart LR
         K --> L["Return {totalPPR, perTeam: Map}"]
     end
     </pre>
-  </div>
+    </div>
 
 
-  <!-- ═══════════════════════════════ 7. ESPN SYNC ═══════════════════════════════ -->
-  <h2 id="espn">7. ESPN Sync Pipeline</h2>
+    <!-- ═══════════════════════════════ 7. ESPN SYNC ═══════════════════════════════ -->
+    <h2 id="espn">7. ESPN Sync Pipeline</h2>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 sequenceDiagram
     participant Cron as Vercel Cron\n(every 5 min)
     participant API as /api/cron/sync
@@ -580,20 +835,22 @@ sequenceDiagram
 
     API-->>Cron: SyncResult {gamesUpdated, teamsUpdated, playInResolved, errors}
     </pre>
-  </div>
+    </div>
 
-  <div class="callout">
-    <strong>Round Detection</strong>: ESPN embeds the round name in <code>competition.notes[0].headline</code> (e.g. <code>"Elite Eight - East Regional"</code>). The sync function parses this string to map to round numbers 0–6.
-  </div>
+    <div class="callout">
+      <strong>Round Detection</strong>: ESPN embeds the round name in <code>competition.notes[0].headline</code> (e.g.
+      <code>"Elite Eight - East Regional"</code>). The sync function parses this string to map to round numbers 0–6.
+    </div>
 
 
-  <!-- ═══════════════════════════════ 8. DEMO MODE ═══════════════════════════════ -->
-  <h2 id="demo-mode">8. Demo Mode Architecture</h2>
+    <!-- ═══════════════════════════════ 8. DEMO MODE ═══════════════════════════════ -->
+    <h2 id="demo-mode">8. Demo Mode Architecture</h2>
 
-  <p>The demo at <code>/demo</code> is a <strong>full app mirror with zero auth and zero DB calls</strong>. Every real component is reused via a <code>demoMode</code> prop pattern.</p>
+    <p>The demo at <code>/demo</code> is a <strong>full app mirror with zero auth and zero DB calls</strong>. Every real
+      component is reused via a <code>demoMode</code> prop pattern.</p>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 graph TD
     subgraph DemoLayout["/demo/layout.tsx"]
         DP["DemoProvider\ndemo-context.tsx"]
@@ -615,16 +872,17 @@ graph TD
         CTP["computeTeamsForPicks(...)\n→ Team[]"]
     end
 
-    subgraph DemoData["Static Demo Data (demo-data.ts)"]
-        TEAMS["64 real 2025 teams\nwinsAtRound[] elimAtRound[]"]
-        USERS["12 demo users\npre-set 8-team picks each"]
+    subgraph DemoData["Static Demo Data"]
+        TEAMS["demo-data.ts\n64 real 2025 teams\nwinsAtRound[] elimAtRound[]"]
+        USERS["demo-users-2025.ts\nREAL_2025_USERS\nactual participant picks"]
     end
 
     subgraph DemoPages["/demo/* pages"]
-        DL["/demo/leaderboard\nLeaderboardTable\n+ HistoryChart"]
+        DL["/demo/leaderboard\nLeaderboardTable + HistoryChart\n+ Optimal 8 line"]
         DP2["/demo/picks\nPicksForm (all view modes)"]
         DS["/demo/scores\nScoresGrid"]
-        DSim["/demo/simulator\nSimulatorPanel"]
+        DSim["/demo/simulator\nAdvancingBracket (simulator mode)\n+ docked leaderboard"]
+        DB["/demo/bracket\nTournamentBracket (read-only)"]
         DA["/demo/admin/**\nUserTable, SettingsForm, SyncButton"]
     end
 
@@ -638,13 +896,13 @@ graph TD
     style DemoContext fill:#1a1030,stroke:#7c3aed
     style Engine fill:#0d1a2e,stroke:#58a6ff
     </pre>
-  </div>
+    </div>
 
-  <h3>The <code>demoMode</code> Prop Pattern</h3>
-  <p>Every shared component has a dual execution path based on <code>demoMode?: boolean</code>:</p>
+    <h3>The <code>demoMode</code> Prop Pattern</h3>
+    <p>Every shared component has a dual execution path based on <code>demoMode?: boolean</code>:</p>
 
-  <div class="diagram">
-    <pre class="mermaid">
+    <div class="diagram">
+      <pre class="mermaid">
 flowchart LR
     subgraph Real["Real App"]
         R1["Page fetches from Prisma\nor calls /api/*"]
@@ -665,25 +923,60 @@ flowchart LR
 
     note1["Same component\ndemo/leaderboard/page.tsx\nreuses LeaderboardTable"]
     </pre>
-  </div>
+    </div>
 
-  <h3>Timeline Engine</h3>
-  <p>The game sequence engine derives ~63 individual games from round-level data stored in <code>demo-data.ts</code>:</p>
-  <ul>
-    <li><strong>R64 (Round 1)</strong>: Standard NCAA seed matchups (1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15) per region = 32 games</li>
-    <li><strong>R32–E8</strong>: Pairs winners by bracket position = 16 + 8 + 4 games</li>
-    <li><strong>F4</strong>: East vs West, South vs Midwest = 2 games</li>
-    <li><strong>Championship</strong>: 1 game</li>
-    <li><strong>Play-in games</strong>: Prepended as Round 0</li>
-  </ul>
+    <h3>Timeline Engine</h3>
+    <p>The game sequence engine derives ~63 individual games from round-level data stored in <code>demo-data.ts</code>:
+    </p>
+    <ul>
+      <li><strong>R64 (Round 1)</strong>: Standard NCAA seed matchups (1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15)
+        per region = 32 games</li>
+      <li><strong>R32–E8</strong>: Pairs winners by bracket position = 16 + 8 + 4 games</li>
+      <li><strong>F4</strong>: East vs West, South vs Midwest = 2 games</li>
+      <li><strong>Championship</strong>: 1 game</li>
+      <li><strong>Play-in games</strong>: Prepended as Round 0</li>
+    </ul>
+
+    <h3>AdvancingBracket — Dual Mode</h3>
+    <p><code>advancing-bracket.tsx</code> is the single bracket component serving two very different contexts:</p>
+    <table>
+      <tr>
+        <th>Mode</th>
+        <th>Key Props</th>
+        <th>Behavior</th>
+      </tr>
+      <tr>
+        <td><code>picks</code></td>
+        <td><code>selectedTeamIds</code>, <code>onToggleTeam</code>, <code>disabled</code></td>
+        <td>Pre-tournament team selection; highlights picked teams; used in PicksForm</td>
+      </tr>
+      <tr>
+        <td><code>simulator</code></td>
+        <td><code>gamePicks</code>, <code>onPickGame</code>, <code>gameIndex</code></td>
+        <td>Click matchups to pick winners; cascade logic propagates picks forward through bracket tree</td>
+      </tr>
+    </table>
+    <p><strong>Cascade algorithm</strong> (simulator mode): for each game, participants are derived from prior results —
+      locked games (before <code>gameIndex</code>) feed actual winners forward; unlocked games with a user pick feed
+      that pick forward; missing picks show TBD. This cascades from R64 through Championship.</p>
+
+    <h3>Leaderboard History Chart</h3>
+    <p>The chart in <code>leaderboard-history-chart.tsx</code> renders three layers simultaneously:</p>
+    <ul>
+      <li><strong>Solid lines</strong> (0 → gameIndex): actual accumulated scores per user</li>
+      <li><strong>Dashed lines</strong> (gameIndex → end): TPS projections using bracket-aware PPR</li>
+      <li><strong>Optimal 8 line</strong>: distinct dashed gray reference showing theoretical ceiling — computed in
+        <code>DemoProvider</code>, never decreases as tournament progresses
+      </li>
+    </ul>
 
 
-  <!-- ═══════════════════════════════ 9. DATA FLOWS ═══════════════════════════════ -->
-  <h2 id="data-flows">9. Key Data Flows</h2>
+    <!-- ═══════════════════════════════ 9. DATA FLOWS ═══════════════════════════════ -->
+    <h2 id="data-flows">9. Key Data Flows</h2>
 
-  <h3>Picks Submission</h3>
-  <div class="diagram">
-    <pre class="mermaid">
+    <h3>Picks Submission</h3>
+    <div class="diagram">
+      <pre class="mermaid">
 sequenceDiagram
     participant U as User
     participant PF as PicksForm (Client)
@@ -704,11 +997,11 @@ sequenceDiagram
     API-->>PF: 201 {picks[]}
     PF-->>U: Success toast + refresh
     </pre>
-  </div>
+    </div>
 
-  <h3>Leaderboard Computation</h3>
-  <div class="diagram">
-    <pre class="mermaid">
+    <h3>Leaderboard Computation</h3>
+    <div class="diagram">
+      <pre class="mermaid">
 sequenceDiagram
     participant P as /leaderboard page (RSC)
     participant SL as scoring.ts
@@ -725,16 +1018,16 @@ sequenceDiagram
         BPR-->>SL: {totalPPR, perTeam}
         SL->>SL: tps = currentScore + totalPPR
     end
-    SL->>SL: Sort by TPS desc → score desc → name asc
+    SL->>SL: Sort: Points desc → TPS desc → name asc
     SL->>SL: Top 4 → attach charityPreference
     SL-->>P: LeaderboardEntry[]
     P-->>Browser: Rendered HTML table
     </pre>
-  </div>
+    </div>
 
-  <h3>Demo Timeline Advance</h3>
-  <div class="diagram">
-    <pre class="mermaid">
+    <h3>Demo Timeline Advance</h3>
+    <div class="diagram">
+      <pre class="mermaid">
 sequenceDiagram
     participant U as User
     participant CP as DemoControlPanel
@@ -754,71 +1047,306 @@ sequenceDiagram
     COMP-->>U: Re-renders with game 42 state
     Note over CTX,COMP: Zero API calls — pure in-memory computation
     </pre>
+    </div>
+
+
+    <!-- ═══════════════════════════════ 10. FILE MAP ═══════════════════════════════ -->
+    <h2 id="file-map">10. Critical File Map</h2>
+
+    <table>
+      <tr>
+        <th>File</th>
+        <th>Layer</th>
+        <th>Purpose</th>
+      </tr>
+      <tr>
+        <td><code>prisma/schema.prisma</code></td>
+        <td><span class="badge badge-db">DB</span></td>
+        <td>Source of truth for all models, relations, enums</td>
+      </tr>
+      <tr>
+        <td><code>src/generated/prisma/</code></td>
+        <td><span class="badge badge-db">DB</span></td>
+        <td>Prisma client (do not edit — regenerated by migrations)</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/prisma.ts</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Prisma singleton with Neon HTTP adapter</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/auth.ts</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Full NextAuth config: Prisma adapter, Resend, session callbacks</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/auth.config.ts</code></td>
+        <td><span class="badge badge-be">Edge</span></td>
+        <td>Edge-safe auth config — route protection callbacks only</td>
+      </tr>
+      <tr>
+        <td><code>src/middleware.ts</code></td>
+        <td><span class="badge badge-be">Edge</span></td>
+        <td>Route guards — imports auth.config only</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/espn.ts</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>ESPN fetch, transform, full sync logic (upserts teams + games)</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/scoring.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>ALL scoring: computeLeaderboard, computeUserScore, computeSimulatedLeaderboard</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/bracket-ppr.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Bracket-aware PPR algorithm — resolves bracket conflicts for accurate TPS</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/demo-context.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>DemoProvider — all demo state + computed leaderboard/scores/teams</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/demo-game-sequence.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Game-by-game engine: generates 63 games, computes state at any index</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/demo-data.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Real 2025 NCAA teams (winsAtRound/elimAtRound); imports REAL_2025_USERS as demo users</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/demo-users-2025.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Actual participant picks for the 2025 tournament (REAL_2025_USERS export)</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/tournament-data.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Year registry — add future tournament years here</td>
+      </tr>
+      <tr>
+        <td><code>src/app/api/picks/route.ts</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>GET/POST/PUT picks — deadline enforcement, 8-pick limit</td>
+      </tr>
+      <tr>
+        <td><code>src/app/api/leaderboard/route.ts</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>GET leaderboard — calls computeLeaderboard, no-store cache</td>
+      </tr>
+      <tr>
+        <td><code>src/app/api/scores/route.ts</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>GET live scores — calls fetchESPNScoreboard, 60s cache</td>
+      </tr>
+      <tr>
+        <td><code>src/app/api/cron/sync/route.ts</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Vercel cron: syncs ESPN every 5 min, bearer-token protected</td>
+      </tr>
+      <tr>
+        <td><code>src/app/(protected)/layout.tsx</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Auth gate for /picks, /leaderboard, /scores, /simulator</td>
+      </tr>
+      <tr>
+        <td><code>src/app/admin/layout.tsx</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Admin gate — redirects non-admin users</td>
+      </tr>
+      <tr>
+        <td><code>src/app/demo/layout.tsx</code></td>
+        <td><span class="badge badge-be">Server</span></td>
+        <td>Wraps demo in DemoProvider + DemoControlPanel</td>
+      </tr>
+      <tr>
+        <td><code>src/components/picks/picks-form.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>8-pick selection form + view modes (Region / All / By Seed)</td>
+      </tr>
+      <tr>
+        <td><code>src/components/leaderboard/leaderboard-table.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Sortable standings table with charity display for top 4</td>
+      </tr>
+      <tr>
+        <td><code>src/components/leaderboard/leaderboard-history-chart.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Recharts: solid score lines + dashed TPS projections + Optimal 8 reference line</td>
+      </tr>
+      <tr>
+        <td><code>src/components/demo/demo-control-panel.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Fixed timeline bar: year, persona, scrubber, play/pause, speed</td>
+      </tr>
+      <tr>
+        <td><code>src/components/picks/bracket-view.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Interactive bracket (picks only) with conflict detection + zoom</td>
+      </tr>
+      <tr>
+        <td><code>src/components/bracket/advancing-bracket.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Dual-mode bracket: picks selection or simulator cascade game picking</td>
+      </tr>
+      <tr>
+        <td><code>src/components/bracket/tournament-bracket.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Read-only 64-team bracket visualization on /demo/bracket</td>
+      </tr>
+      <tr>
+        <td><code>src/app/demo/bracket/page.tsx</code></td>
+        <td><span class="badge badge-fe">Client</span></td>
+        <td>Full bracket page — auto-updates as demo timeline advances</td>
+      </tr>
+      <tr>
+        <td><code>src/types/index.ts</code></td>
+        <td><span class="badge badge-shared">Shared</span></td>
+        <td>Shared TypeScript types + NextAuth module augmentation</td>
+      </tr>
+    </table>
+
+    <!-- ═══════════════════════════════ 11. SUGGESTIONS ═══════════════════════════════ -->
+    <h2 id="suggestions">11. Suggestions &amp; Alternative Architectures</h2>
+
+    <p>The following are architectural improvements and alternatives worth considering for future sprints or the 2026
+      tournament cycle.</p>
+
+    <h3>1. Leaderboard: Move to Real-Time (WebSockets / Server-Sent Events)</h3>
+    <p>Currently the live leaderboard is polled by each client via <code>GET /api/leaderboard</code> with
+      <code>no-store</code> cache. During March Madness, tens of simultaneous users would each trigger a full Prisma
+      query every refresh cycle.
+    </p>
+    <ul>
+      <li><strong>Suggested</strong>: Use <a href="https://vercel.com/docs/functions/streaming"
+          style="color:var(--blue)">Vercel Streaming</a> or a lightweight SSE endpoint. The cron job writes the computed
+        leaderboard to a KV store (e.g. Vercel KV / Upstash Redis); the SSE endpoint streams the cached result to
+        clients.</li>
+      <li><strong>Benefit</strong>: One Prisma query per cron tick (every 5 min) instead of N queries per N clients.
+      </li>
+      <li><strong>Trade-off</strong>: Adds Upstash/Redis dependency; slight staleness (≤5 min) acceptable for a contest
+        app.</li>
+    </ul>
+
+    <h3>2. Demo Mode: Pre-Compute at Build Time</h3>
+    <p>The demo recomputes all 63 leaderboard snapshots on every render in <code>DemoProvider</code>. This is
+      intentional for smooth scrubbing but adds CPU cost proportional to user count.</p>
+    <ul>
+      <li><strong>Suggested</strong>: Generate the full snapshot array as a static JSON file at build time (a
+        <code>prebuild</code> script) and import it directly. <code>DemoProvider</code> would just index into a
+        pre-built array.
+      </li>
+      <li><strong>Benefit</strong>: Zero runtime computation; instant scrubbing even with 50+ demo users.</li>
+      <li><strong>Trade-off</strong>: Need to regenerate JSON when <code>demo-data.ts</code> or <code>demo-users</code>
+        changes. Easy to automate.</li>
+    </ul>
+
+    <h3>3. Bracket-Aware PPR: Memoization</h3>
+    <p><code>computeBracketAwarePPR()</code> is called once per user per leaderboard refresh, and re-runs from scratch
+      each time. With 12 demo users × 63 snapshots, this compounds quickly.</p>
+    <ul>
+      <li><strong>Suggested</strong>: Cache results keyed by <code>(pickedTeamIds[], teamStateHash)</code> using a
+        <code>Map</code> or <code>useMemo</code> in the context. Team state only changes when <code>gameIndex</code>
+        changes.
+      </li>
+      <li><strong>Benefit</strong>: Near-zero cost on slides where team state hasn't changed (e.g. scrubbing within a
+        round).</li>
+    </ul>
+
+    <h3>4. Scoring: Move <code>computeLeaderboard</code> to a Server Action</h3>
+    <p>The leaderboard page currently directly queries Prisma inside an RSC, which is fine but tightly couples the page
+      to the DB. There's also a separate <code>/api/leaderboard</code> route that does the same computation.</p>
+    <ul>
+      <li><strong>Suggested</strong>: Canonicalize to a single <a
+          href="https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations"
+          style="color:var(--blue)">Next.js Server Action</a> or a shared <code>getLeaderboard()</code> server function.
+        Remove the duplicate API route if the leaderboard page is the only consumer.</li>
+      <li><strong>Benefit</strong>: Single source of truth, easier to add caching via <code>unstable_cache</code>.</li>
+    </ul>
+
+    <h3>5. Auth: Add an Invite-Only Guard</h3>
+    <p>Currently any email can sign up. For a private contest with a fixed set of participants, an allowlist would
+      prevent uninvited users from creating accounts.</p>
+    <ul>
+      <li><strong>Suggested</strong>: In the <code>signIn</code> callback in <code>auth.ts</code>, check the email
+        against <code>AppSettings.allowedEmails</code> (a new JSON field) or a separate <code>Allowlist</code> model.
+        Return <code>false</code> to reject uninvited signups.</li>
+      <li><strong>Benefit</strong>: No need to manually manage <code>isPaid</code> flags or bulk-delete accounts.</li>
+    </ul>
+
+    <h3>6. Demo Mode: Multi-Year Dataset as a DB Table</h3>
+    <p>Right now adding a new tournament year means creating a new <code>demo-data-YYYY.ts</code> TypeScript file and a
+      <code>demo-users-YYYY.ts</code> file. This is fine for 1-2 years but grows unwieldy.
+    </p>
+    <ul>
+      <li><strong>Suggested</strong>: Store tournament data in a read-only <code>TournamentSnapshot</code> table (year,
+        teamsJson, usersJson). The demo engine reads from DB on initial load instead of from static files. Admin UI can
+        upload new tournament CSVs.</li>
+      <li><strong>Benefit</strong>: Admins can add historical years without a code deploy.</li>
+      <li><strong>Trade-off</strong>: Demo mode is no longer zero-DB — acceptable given it's read-only and cacheable.
+      </li>
+    </ul>
+
+    <h3>7. Bracket Components: Unify <code>bracket-view.tsx</code> and <code>advancing-bracket.tsx</code></h3>
+    <p>There are now two interactive bracket components: <code>bracket-view.tsx</code> (picks page, per-region tabs) and
+      <code>advancing-bracket.tsx</code> (full 64-team, simulator/picks dual-mode). Their feature sets overlap
+      significantly.
+    </p>
+    <ul>
+      <li><strong>Suggested</strong>: Consolidate into <code>advancing-bracket.tsx</code> as the single system-wide
+        bracket primitive. Add a <code>layout="tabs"</code> prop to toggle the per-region tab view used on the picks
+        page. Deprecate <code>bracket-view.tsx</code>.</li>
+      <li><strong>Benefit</strong>: One place for conflict detection logic, one CSS layout system, one set of tests.
+      </li>
+    </ul>
+
+    <h3>8. ESPN Sync: Dead-Letter Queue for Failed Games</h3>
+    <p>If the ESPN API returns an error mid-sync, <code>syncTournamentData()</code> currently logs the error and returns
+      a partial <code>SyncResult</code>. Failed game upserts are silently dropped.</p>
+    <ul>
+      <li><strong>Suggested</strong>: Persist failed ESPN game IDs to a <code>SyncError</code> table. On the next cron
+        tick, retry failed items first. Surface pending errors in the Admin Sync page.</li>
+      <li><strong>Benefit</strong>: Guarantees eventual consistency even during transient ESPN API hiccups during the
+        tournament.</li>
+    </ul>
+
+    <div
+      style="margin-top:64px; border-top:1px solid var(--border); padding-top:20px; color:var(--muted); font-size:0.82em;">
+      Updated March 2026 · Super 8s codebase · Stack: Next.js 16 · React 19 · Prisma 7 · Neon PostgreSQL · NextAuth v5 ·
+      Tailwind v4
+    </div>
   </div>
 
-
-  <!-- ═══════════════════════════════ 10. FILE MAP ═══════════════════════════════ -->
-  <h2 id="file-map">10. Critical File Map</h2>
-
-  <table>
-    <tr><th>File</th><th>Layer</th><th>Purpose</th></tr>
-    <tr><td><code>prisma/schema.prisma</code></td><td><span class="badge badge-db">DB</span></td><td>Source of truth for all models, relations, enums</td></tr>
-    <tr><td><code>src/generated/prisma/</code></td><td><span class="badge badge-db">DB</span></td><td>Prisma client (do not edit — regenerated by migrations)</td></tr>
-    <tr><td><code>src/lib/prisma.ts</code></td><td><span class="badge badge-be">Server</span></td><td>Prisma singleton with Neon HTTP adapter</td></tr>
-    <tr><td><code>src/lib/auth.ts</code></td><td><span class="badge badge-be">Server</span></td><td>Full NextAuth config: Prisma adapter, Resend, session callbacks</td></tr>
-    <tr><td><code>src/lib/auth.config.ts</code></td><td><span class="badge badge-be">Edge</span></td><td>Edge-safe auth config — route protection callbacks only</td></tr>
-    <tr><td><code>src/middleware.ts</code></td><td><span class="badge badge-be">Edge</span></td><td>Route guards — imports auth.config only</td></tr>
-    <tr><td><code>src/lib/espn.ts</code></td><td><span class="badge badge-be">Server</span></td><td>ESPN fetch, transform, full sync logic (upserts teams + games)</td></tr>
-    <tr><td><code>src/lib/scoring.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>ALL scoring: computeLeaderboard, computeUserScore, computeSimulatedLeaderboard</td></tr>
-    <tr><td><code>src/lib/bracket-ppr.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Bracket-aware PPR algorithm — resolves bracket conflicts for accurate TPS</td></tr>
-    <tr><td><code>src/lib/demo-context.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>DemoProvider — all demo state + computed leaderboard/scores/teams</td></tr>
-    <tr><td><code>src/lib/demo-game-sequence.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Game-by-game engine: generates 63 games, computes state at any index</td></tr>
-    <tr><td><code>src/lib/demo-data.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>2025 NCAA teams (winsAtRound/elimAtRound) + 12 demo users</td></tr>
-    <tr><td><code>src/lib/tournament-data.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Year registry — add future tournament years here</td></tr>
-    <tr><td><code>src/app/api/picks/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>GET/POST/PUT picks — deadline enforcement, 8-pick limit</td></tr>
-    <tr><td><code>src/app/api/leaderboard/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>GET leaderboard — calls computeLeaderboard, no-store cache</td></tr>
-    <tr><td><code>src/app/api/scores/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>GET live scores — calls fetchESPNScoreboard, 60s cache</td></tr>
-    <tr><td><code>src/app/api/cron/sync/route.ts</code></td><td><span class="badge badge-be">Server</span></td><td>Vercel cron: syncs ESPN every 5 min, bearer-token protected</td></tr>
-    <tr><td><code>src/app/(protected)/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Auth gate for /picks, /leaderboard, /scores, /simulator</td></tr>
-    <tr><td><code>src/app/admin/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Admin gate — redirects non-admin users</td></tr>
-    <tr><td><code>src/app/demo/layout.tsx</code></td><td><span class="badge badge-be">Server</span></td><td>Wraps demo in DemoProvider + DemoControlPanel</td></tr>
-    <tr><td><code>src/components/picks/picks-form.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>8-pick selection form + view modes (Region / All / By Seed)</td></tr>
-    <tr><td><code>src/components/leaderboard/leaderboard-table.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Sortable standings table with charity display for top 4</td></tr>
-    <tr><td><code>src/components/leaderboard/leaderboard-history-chart.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Recharts line chart: 24 series (12 users × score + TPS projection)</td></tr>
-    <tr><td><code>src/components/demo/demo-control-panel.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Fixed timeline bar: year, persona, scrubber, play/pause, speed</td></tr>
-    <tr><td><code>src/components/picks/bracket-view.tsx</code></td><td><span class="badge badge-fe">Client</span></td><td>Interactive bracket with conflict detection + zoom controls</td></tr>
-    <tr><td><code>src/types/index.ts</code></td><td><span class="badge badge-shared">Shared</span></td><td>Shared TypeScript types + NextAuth module augmentation</td></tr>
-  </table>
-
-  <div style="margin-top:64px; border-top:1px solid var(--border); padding-top:20px; color:var(--muted); font-size:0.82em;">
-    Generated for Super 8s codebase · Stack: Next.js 16 · React 19 · Prisma 7 · Neon PostgreSQL · NextAuth v5 · Tailwind v4
-  </div>
-</div>
-
-<script>
-  mermaid.initialize({
-    startOnLoad: true,
-    theme: 'dark',
-    themeVariables: {
-      background: '#161b22',
-      mainBkg: '#1c2128',
-      nodeBorder: '#30363d',
-      clusterBkg: '#1c2128',
-      titleColor: '#e6edf3',
-      edgeLabelBackground: '#161b22',
-      lineColor: '#58a6ff',
-      primaryColor: '#1c2128',
-      primaryTextColor: '#e6edf3',
-      primaryBorderColor: '#58a6ff',
-      secondaryColor: '#2a1d3e',
-      tertiaryColor: '#0d2015',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-      fontSize: '13px',
-    },
-    flowchart: { htmlLabels: true, curve: 'basis' },
-    sequence: { actorMargin: 60, messageMargin: 30 },
-    er: { diagramPadding: 30 },
-  });
-</script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        background: '#161b22',
+        mainBkg: '#1c2128',
+        nodeBorder: '#30363d',
+        clusterBkg: '#1c2128',
+        titleColor: '#e6edf3',
+        edgeLabelBackground: '#161b22',
+        lineColor: '#58a6ff',
+        primaryColor: '#1c2128',
+        primaryTextColor: '#e6edf3',
+        primaryBorderColor: '#58a6ff',
+        secondaryColor: '#2a1d3e',
+        tertiaryColor: '#0d2015',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+        fontSize: '13px',
+      },
+      flowchart: { htmlLabels: true, curve: 'basis' },
+      sequence: { actorMargin: 60, messageMargin: 30 },
+      er: { diagramPadding: 30 },
+    });
+  </script>
 </body>
+
 </html>
