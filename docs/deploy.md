@@ -1,6 +1,6 @@
 # Super 8s — Deployment Guide
 
-> **Last updated:** Feb 28, 2026
+> **Last updated:** Mar 3, 2026  
 > **Target:** Vercel (Pro) + Neon PostgreSQL + Resend
 
 ---
@@ -14,7 +14,7 @@
 | Neon DB (any period) | Free tier, auto-pauses | $0 |
 | Resend | Free tier (100 emails/day) | $0 |
 
-**Upgrade to Pro by March 16** — your `*/5 * * * *` cron requires Pro (Hobby allows only 2 crons/day). Downgrade back to Hobby after April 6.
+**Upgrade to Pro by March 16** — the `*/5 * * * *` cron requires Pro (Hobby allows only 2 crons/day). Downgrade back to Hobby after April 6.
 
 ---
 
@@ -26,7 +26,6 @@ Run through this **before** running `vercel --prod` for the first time.
 
 - [ ] **Neon** — create a production project; grab the **pooler URL** (`DATABASE_URL`) and **direct URL** (`DIRECT_URL`) from the Neon dashboard.
 - [ ] **Resend** — verify a sending domain; get `AUTH_RESEND_KEY` and decide `RESEND_FROM_EMAIL`.
-- [ ] **Google Cloud** — enable Sheets API, create a Service Account, download JSON key, share your Sheet with the service account email.
 - [ ] **Vercel** — upgrade account to Pro before deploying (required for 5-min cron).
 
 ### 2. Generate Secrets
@@ -39,19 +38,7 @@ openssl rand -base64 32
 openssl rand -base64 32
 ```
 
-### 3. Fix `prisma/schema.prisma`
-
-The datasource block **must** include the `url` and `directUrl` fields before migrations work:
-
-```prisma
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
-```
-
-### 4. Run Database Migration (against production Neon)
+### 3. Run Database Migration (against production Neon)
 
 ```bash
 DATABASE_URL="<your-neon-pooler-url>" \
@@ -59,15 +46,23 @@ DIRECT_URL="<your-neon-direct-url>" \
 npx prisma migrate deploy
 ```
 
-### 5. Day 0 Seed from Google Sheet
+### 4. Seed the Database
 
-Run **once** to bootstrap teams, users, and picks from the Sheet into Neon:
+Run the Prisma seed to bootstrap the `AppSettings` singleton:
 
 ```bash
-npx tsx prisma/seed-from-sheet.ts
+DATABASE_URL="<your-neon-pooler-url>" \
+DIRECT_URL="<your-neon-direct-url>" \
+npm run db:seed
 ```
 
-Then set the picks deadline manually in `/admin/settings` after deploy.
+Then manually add users, teams, and picks via the admin panel or by running Prisma Studio:
+
+```bash
+npm run db:studio
+```
+
+> **Note on picks data:** For 2025, participant picks are already captured in `src/lib/demo-users-2025.ts`. A one-time script can be written to import these into the production DB if needed, using `npx tsx` against the Neon database.
 
 ---
 
@@ -92,9 +87,6 @@ vercel env add AUTH_URL                 production   # https://your-domain.verce
 vercel env add AUTH_RESEND_KEY          production
 vercel env add RESEND_FROM_EMAIL        production
 vercel env add CRON_SECRET              production
-vercel env add GOOGLE_SHEETS_ID         production
-vercel env add GOOGLE_SERVICE_ACCOUNT_EMAIL production
-vercel env add GOOGLE_PRIVATE_KEY       production   # include full PEM with \n escapes
 ```
 
 > **Note on `AUTH_URL`:** Must match the domain magic-link emails link to. If you add a custom domain later, update this env var and redeploy.
@@ -119,18 +111,17 @@ Already defined in `vercel.json` — no changes needed:
 
 The cron calls `/api/cron/sync` with `Authorization: Bearer <CRON_SECRET>`. Verify it's firing in **Vercel Dashboard → Logs → Cron**.
 
-**ESPN fallback:** If ESPN sync fails, the cron automatically falls back to re-reading the Google Sheet for current win/loss data (see `src/lib/espn.ts`).
-
 ---
 
 ## Post-Deploy Verification
 
-- [ ] Visit `/demo` — confirm demo mode renders without auth.
+- [ ] Visit `/demo` — confirm demo mode renders without auth, scrub timeline, check bracket page.
 - [ ] Send a magic-link email to yourself — confirm arrival and login flow works.
 - [ ] Check Vercel Logs → Cron — verify `*/5` invocations appear after first trigger.
 - [ ] Visit `/admin/settings` — set the picks deadline.
 - [ ] Visit `/admin/users` — confirm seeded users appear.
 - [ ] Visit `/leaderboard` and `/scores` — confirm data renders from Neon.
+- [ ] Visit `/admin/sync` — manually trigger one ESPN sync; check logs for `SyncResult`.
 
 ---
 
@@ -139,20 +130,32 @@ The cron calls `/api/cron/sync` with `Authorization: Bearer <CRON_SECRET>`. Veri
 ### Before the Tournament (~March 16)
 1. Upgrade Vercel account to **Pro**.
 2. Ensure all env vars are set in Vercel dashboard.
-3. Run `vercel --prod` (or push to `main` if CI deploy is configured).
-4. Run Day 0 Sheet seed: `npx tsx prisma/seed-from-sheet.ts`.
+3. Run `vercel --prod` (or push to `main` — Vercel auto-deploys on push to `main`).
+4. Run DB migration + seed if not done: `npx prisma migrate deploy && npm run db:seed`.
 5. Set picks deadline in `/admin/settings`.
+6. Add all participants via `/admin/users` and flip `isPaid` as payments come in.
 
 ### During the Tournament (Mar 19 – Apr 6)
-- **Cron** runs every 5 min automatically — monitor in Vercel Logs.
-- Use `/admin/sync` for a manual ESPN sync if needed.
-- Use `/admin/sheet-import` to re-bootstrap from Sheet if ESPN is down for an extended period.
+- **Cron** runs every 5 min automatically — monitor in Vercel Logs → Cron.
+- Use `/admin/sync` for a manual ESPN sync if the cron hasn't fired recently.
 - Use `/admin/users` to flip `isPaid` as payments come in.
+- Monitor `/leaderboard` directly — if scores look stale, trigger a manual sync.
 
 ### After the Tournament (~April 7)
 1. Downgrade Vercel account back to **Hobby** ($0/mo).
 2. Neon automatically pauses compute after inactivity — no action needed.
-3. The app continues to serve pages; the 5-min cron stops firing on Hobby (no live updates, but that's fine in the off-season).
+3. The app continues to serve pages; the 5-min cron stops firing on Hobby (no live updates, fine for off-season).
+4. The `/demo` mode continues to work fully — it's pure in-memory, no DB required.
+
+---
+
+## Updating for 2026
+
+1. Create `src/lib/demo-data-2026.ts` with the new team bracket data.
+2. Create `src/lib/demo-users-2026.ts` with participant picks.
+3. Register the new year in `src/lib/tournament-data.ts`.
+4. Update the ESPN sync logic in `src/lib/espn.ts` if ESPN changes their API structure.
+5. Run `npm run db:migrate` to apply any schema changes.
 
 ---
 
@@ -162,6 +165,7 @@ The cron calls `/api/cron/sync` with `Authorization: Bearer <CRON_SECRET>`. Veri
 |---|---|---|
 | Magic links don't work | `AUTH_URL` mismatch | Ensure `AUTH_URL` matches the exact deployed domain |
 | Cron not firing | On Hobby plan | Upgrade to Pro |
-| `PrismaClientInitializationError` | Missing `url` in schema | Add `url = env("DATABASE_URL")` to datasource block |
+| `PrismaClientInitializationError` | Missing `DATABASE_URL` | Check env vars in Vercel dashboard |
 | ESPN sync fails silently | `CRON_SECRET` mismatch | Re-check `CRON_SECRET` env var in Vercel matches your `.env` value |
-| Google Sheets import fails | Service account not shared | Share Sheet with service account email and check `GOOGLE_PRIVATE_KEY` escaping |
+| `/demo` shows blank data | `demo-data.ts` issue | Check browser console; likely a `computeStateAtGame` error |
+| Build fails on Vercel | Turbopack vs production Next.js | Run `npm run build` locally first to reproduce |
